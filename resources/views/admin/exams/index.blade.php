@@ -15,6 +15,8 @@
         <th>Date</th>
         <th>Start</th>
         <th>End</th>
+        <th>semester</th>
+
     </tr>
 
     @forelse ($examList as $exam)
@@ -28,6 +30,8 @@
             <td>{{ $exam->date }}</td>
             <td>{{ $exam->start_time }}</td>
             <td>{{ $exam->end_time }}</td>
+            <td>{{ $exam->semester }}</td>
+
             <td>
                 <a href="{{ route('exams.edit', $exam->id) }}">✏️ Edit</a>
 
@@ -59,6 +63,7 @@
         <th>Date</th>
         <th>Start</th>
         <th>End</th>
+        <th>semester</th>
     </tr>
 
     @forelse ($ccList as $exam)
@@ -72,6 +77,7 @@
             <td>{{ $exam->date }}</td>
             <td>{{ $exam->start_time }}</td>
             <td>{{ $exam->end_time }}</td>
+            <td>{{ $exam->semester }}</td>
             <td>
                 <a href="{{ route('exams.edit', $exam->id) }}">✏️ Edit</a>
 
@@ -104,6 +110,7 @@
         <th>Date</th>
         <th>Start</th>
         <th>End</th>
+        <th>semester</th>
     </tr>
 
     @forelse ($rattrapageList as $exam)
@@ -117,6 +124,7 @@
             <td>{{ $exam->date }}</td>
             <td>{{ $exam->start_time }}</td>
             <td>{{ $exam->end_time }}</td>
+            <td>{{ $exam->semester }}</td>
             <td>
                 <a href="{{ route('exams.edit', $exam->id) }}">✏️ Edit</a>
 

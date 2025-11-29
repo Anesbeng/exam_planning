@@ -14,6 +14,7 @@ protected $fillable = [
     'specialite',
     'niveau',
     'group',
+    'semester',
     'date',
     'start_time',
     'end_time',

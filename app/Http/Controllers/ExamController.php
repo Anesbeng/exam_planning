@@ -41,6 +41,7 @@ class ExamController extends Controller
         'start_time' => $request->start_time,
         'end_time'   => $request->end_time,
         'specialite'  => $request->specialite,
+        'semester'  => $request->semester,
     ]);
 
     return redirect()->route('exams.index')->with('success', 'Exam created!');
@@ -66,6 +67,7 @@ public function update(Request $request, $id)
         'start_time' => $request->start_time,
         'end_time'   => $request->end_time,
         'specialite'  => $request->specialite,
+        'semester'  => $request->semester,
     ]);
 
     return redirect()->route('exams.index')->with('success', 'Exam updated!');

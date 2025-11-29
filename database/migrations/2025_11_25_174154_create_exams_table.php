@@ -20,6 +20,7 @@ return new class extends Migration
     $table->string('specialite');
     $table->string('niveau');
     $table->string('group');
+    $table->string('semester');
     $table->date('date');
     $table->time('start_time');
     $table->time('end_time');

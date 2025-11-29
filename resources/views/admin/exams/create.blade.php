@@ -59,6 +59,13 @@
         <option value="biologie">biologie</option>
     </select>
     <br><br>
+    <label> Semester:</label>
 
+    <select name="semester" required>
+        <option value="S1">S1</option>
+        <option value="S2">S2</option>
+
+    </select>
+    <br><br>
     <button type="submit">Save</button>
 </form>

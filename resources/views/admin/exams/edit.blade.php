@@ -40,5 +40,11 @@
         <option value="biologie" {{ $exam->specialite == 'biologie' ? 'selected' : '' }}>biologie</option>
     </select><br><br>
 
+    Semester:
+    <select name="semester">
+        <option value="S1" {{ $exam->semester == 'S1' ? 'selected' : '' }}>S1</option>
+        <option value="S2" {{ $exam->semester == 'S2' ? 'selected' : '' }}>S2</option>
+    </select><br><br>
+
     <button type="submit">Update</button>
 </form>
