@@ -11,16 +11,28 @@
     </select>
     <br><br>
 
+
     <label>Module :</label>
-    <input type="text" name="module" required>
+    <select name="module" required>
+        @foreach ($modules as $module)
+            <option value="{{ $module->name }}">{{ $module->name }}</option>
+        @endforeach
+
+    </select>
     <br><br>
 
     <label>Teacher :</label>
     <input type="text" name="teacher" required>
     <br><br>
 
+
     <label>Room :</label>
-    <input type="text" name="room" required>
+    <select name="room" required>
+        @foreach ($salle as $s)
+            <option value="{{ $s->name }}">{{ $s->name }}</option>
+        @endforeach
+
+    </select>
     <br><br>
 
     <!-- FIXED: Niveau field -->

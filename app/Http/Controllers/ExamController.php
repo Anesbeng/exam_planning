@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Exam;
+use App\Models\Module;
+use App\Models\Salle;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
@@ -20,10 +22,14 @@ class ExamController extends Controller
 }
 
      
-    public function create()
-    {
-        return view('admin.exams.create');
-    }
+ public function create()
+{
+    
+    $modules = Module::orderBy('name')->get();
+    $salle = Salle::orderBy('name')->get(); 
+    
+    return view('admin.exams.create', compact('modules', 'salle'));
+}
 
     public function store(Request $request)
 {

@@ -5,15 +5,32 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\loginController;
 use App\Http\Controllers\ExamController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\SalleController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\ImportmodulesController;
 
+Route::prefix('admin')->name('admin.')->group(function () {
+
+    Route::resource('teachers', TeacherController::class);
+    Route::resource('students', StudentController::class);
+    Route::resource('salle', SalleController::class);
+
+    // 🚀 ROUTES POUR IMPORT DES MODULES (AVANT resource)
+    Route::get('/modules/import', [ImportmodulesController::class, 'showForm'])
+        ->name('modules.import');
+
+    Route::post('/modules/import', [ImportmodulesController::class, 'import'])
+        ->name('modules.import.submit');
+
+    // Resource modules (APRÈS les routes spécifiques)
+    Route::resource('modules', ModuleController::class);
+});
 // Forgot Password Routes
 Route::get('/forgot-password', function () {
     return view('auth.forgot-password');

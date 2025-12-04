@@ -2,6 +2,11 @@
 <a href="{{ url('/logout') }}">Logout</a><br><br>
 <a href="{{ route('exams.create') }}">➕ Ajouter un examen</a> <br><br>
 <a href="{{ route('import.form') }}">➕ importer users</a> <br><br>
+<a href="{{ route('admin.modules.index') }}">➕ create module</a> <br><br>
+<a href="{{ route('admin.salle.index') }}">➕ create salle</a> <br><br>
+<a href="{{ route('admin.students.create') }}">➕ create student</a> <br><br>
+
+<a href="{{ route('admin.teachers.create') }}">➕ create student</a> <br><br>
 
 <h2>📘 Examens</h2>
 <table border="1" width="100%" cellpadding="8">
