@@ -1,36 +1,35 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
-    public function show()
+    public function login(Request $request)
     {
-        return view('login');
-    }
+        $credentials = $request->only('matricule', 'password');
 
-    public function login()
-    {
-        $credentials = [
-            'matricule' => request('matricule'),
-            'password'  => request('password'),
-        ];
-
-        if (Auth::attempt($credentials)) {
-            if (Auth::user()->role === 'admin') {
-                return redirect('/admin/exams');
-            }
-            return redirect('/homeuser');
+        if (!Auth::attempt($credentials)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Incorrect credentials'
+            ], 401);
         }
 
-        return back()->with('error', 'Incorrect credentials');
-    }
+        $user = Auth::user();
 
-    public function logout()
-    {
-        Auth::logout();
-        return redirect('/login');
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'user' => [
+                'id' => $user->id,
+                'matricule' => $user->matricule,
+                'name' => $user->name,
+                'role' => $user->role  // Make sure your User model has a 'role' column
+            ]
+        ]);
     }
 }

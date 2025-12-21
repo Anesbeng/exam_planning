@@ -78,9 +78,6 @@ $status = Password::reset(
         : back()->withErrors(['email' => [__($status)]]);
 })->middleware('guest')->name('password.update');
 
-
-Route::get('/login', [loginController::class, 'show'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
 Route::get('/logout', [LoginController::class, 'logout']);
 
 Route::middleware('auth')->get('/homeuser', [ExamController::class, 'dashboard'])->name('dashboard');

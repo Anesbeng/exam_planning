@@ -18,8 +18,11 @@ class ExamController extends Controller
     $rattrapageList = Exam::where('type', 'rattrapage')->get();
     
 
-    return view('admin.exams.index', compact('examList', 'ccList', 'rattrapageList'));
-}
+    return response()->json([
+        'exams' => $examList,
+        'ccs' => $ccList,
+        'rattrapages' => $rattrapageList
+    ]);}
 
      
  public function create()
@@ -28,7 +31,10 @@ class ExamController extends Controller
     $modules = Module::orderBy('name')->get();
     $salle = Salle::orderBy('name')->get(); 
     
-    return view('admin.exams.create', compact('modules', 'salle'));
+    return response()->json([
+        'modules' => $modules,
+        'salles' => $salle
+    ]);
 }
 
     public function store(Request $request)
@@ -50,13 +56,17 @@ class ExamController extends Controller
         'semester'  => $request->semester,
     ]);
 
-    return redirect()->route('exams.index')->with('success', 'Exam created!');
+    return response()->json([
+        'message' => 'Exam created successfully'
+    ]);
 }
 
 public function edit($id)
 {
     $exam = Exam::findOrFail($id);
-    return view('admin.exams.edit', compact('exam'));
+   return response()->json([
+        'exam' => $exam
+    ]);
 }
 public function update(Request $request, $id)
 {
@@ -76,14 +86,18 @@ public function update(Request $request, $id)
         'semester'  => $request->semester,
     ]);
 
-    return redirect()->route('exams.index')->with('success', 'Exam updated!');
+    return response()->json([
+        'message' => 'Exam updated successfully'
+    ]);
 }
 public function destroy($id)
 {
     $exam = Exam::findOrFail($id);
     $exam->delete();
 
-    return redirect()->route('exams.index')->with('success', 'Exam deleted!');
+    return response()->json([
+        'message' => 'Exam deleted successfully'
+    ]);
 }
 
 public function dashboard()
@@ -91,6 +105,10 @@ public function dashboard()
     $examList = Exam::where('type', 'exam')->get();
     $ccList = Exam::where('type', 'cc')->get();
     $rattrapageList = Exam::where('type', 'rattrapage')->get();
-    return view('user.homepage', compact('examList', 'ccList', 'rattrapageList'));
+    return response()->json([
+        'exams' => $examList,
+        'ccs' => $ccList,
+        'rattrapages' => $rattrapageList
+    ]);
 }
 }
