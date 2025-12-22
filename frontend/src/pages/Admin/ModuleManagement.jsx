@@ -1,242 +1,651 @@
-import React, { useState } from 'react';
-import Modal from '../UI/Modal';
-import FileImport from '../UI/FileImport';
+import React, { useState, useEffect } from "react";
+import api from "../../api/axios";
+import Modal from "../UI/Modal";
+import "./ModuleManagement.css";
 
 const ModuleManagement = () => {
-  const [modules, setModules] = useState([
-    {
-      id: 1,
-      code: 'MATH101',
-      name: 'Mathématiques Fondamentales',
-      semester: 'S1',
-      teacher: 'Dr. Smith',
-      credits: 6,
-      level: 'L1',
-      specialty: 'Informatique'
-    }
-  ]);
-  
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  
-  const [newModule, setNewModule] = useState({
-    code: '',
-    name: '',
-    semester: '',
-    teacher: '',
-    credits: '',
-    level: '',
-    specialty: ''
-  });
+    const [modules, setModules] = useState([]);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [selectedModule, setSelectedModule] = useState(null);
+    const [teachers, setTeachers] = useState([]);
 
-  const handleAddModule = () => {
-    const module = {
-      id: modules.length + 1,
-      ...newModule
-    };
-    setModules([...modules, module]);
-    setShowAddModal(false);
-    resetForm();
-  };
-
-  const handleImport = (file) => {
-    alert(`Modules importés depuis ${file.name}`);
-    setShowImportModal(false);
-  };
-
-  const resetForm = () => {
-    setNewModule({
-      code: '',
-      name: '',
-      semester: '',
-      teacher: '',
-      credits: '',
-      level: '',
-      specialty: ''
+    const [newModule, setNewModule] = useState({
+        code: "",
+        name: "",
+        semester: "",
+        teacher_responsible: "",
     });
-  };
 
-  return (
-    <div className="module-management">
-      <div className="page-header">
-        <h1>Gestion des Modules</h1>
-        <div className="header-actions">
-          <button 
-            className="btn-secondary"
-            onClick={() => setShowImportModal(true)}
-          >
-            📁 Importer
-          </button>
-          <button 
-            className="btn-primary"
-            onClick={() => setShowAddModal(true)}
-          >
-            + Ajouter Module
-          </button>
+    const [editModule, setEditModule] = useState({
+        code: "",
+        name: "",
+        semester: "",
+        teacher_responsible: "",
+    });
+
+    const [importFile, setImportFile] = useState(null);
+    const [importing, setImporting] = useState(false);
+
+    /* ================= FETCH MODULES ================= */
+    useEffect(() => {
+        fetchModules();
+    }, []);
+
+    const fetchModules = async () => {
+        try {
+            const res = await api.get("/modules");
+            setModules(res.data.modules);
+        } catch (err) {
+            console.error("Fetch modules error:", err);
+            alert("Erreur lors du chargement des modules");
+        }
+    };
+
+    const fetchTeachers = async () => {
+        try {
+            const res = await api.get("/modules/create");
+            setTeachers(res.data.teachers || []);
+        } catch (err) {
+            console.error("Fetch teachers error:", err);
+        }
+    };
+
+    /* ================= ADD MODULE ================= */
+    const handleAddClick = () => {
+        fetchTeachers();
+        setShowAddModal(true);
+    };
+
+    const handleAddModule = async () => {
+        if (
+            !newModule.name ||
+            !newModule.code ||
+            !newModule.semester ||
+            !newModule.teacher_responsible
+        ) {
+            alert("Veuillez remplir tous les champs obligatoires");
+            return;
+        }
+
+        try {
+            await api.post("/modules", {
+                name: newModule.name,
+                code: newModule.code,
+                semester: newModule.semester,
+                teacher_responsible: newModule.teacher_responsible,
+            });
+
+            setShowAddModal(false);
+            resetNewForm();
+            fetchModules();
+            alert("Module créé avec succès!");
+        } catch (err) {
+            console.error("Create module error:", err);
+            alert("Erreur lors de la création du module");
+        }
+    };
+
+    /* ================= EDIT MODULE ================= */
+    const handleEditClick = async (module) => {
+        setSelectedModule(module);
+        setEditModule({
+            code: module.code,
+            name: module.name,
+            semester: module.semester,
+            teacher_responsible: module.teacher_responsible,
+        });
+        await fetchTeachers();
+        setShowEditModal(true);
+    };
+
+    const handleUpdateModule = async () => {
+        if (
+            !editModule.name ||
+            !editModule.code ||
+            !editModule.semester ||
+            !editModule.teacher_responsible
+        ) {
+            alert("Veuillez remplir tous les champs obligatoires");
+            return;
+        }
+
+        try {
+            await api.put(`/modules/${selectedModule.id}`, {
+                name: editModule.name,
+                code: editModule.code,
+                semester: editModule.semester,
+                teacher_responsible: editModule.teacher_responsible,
+            });
+
+            setShowEditModal(false);
+            setSelectedModule(null);
+            fetchModules();
+            alert("Module modifié avec succès!");
+        } catch (err) {
+            console.error("Update module error:", err);
+            alert("Erreur lors de la modification du module");
+        }
+    };
+
+    /* ================= DELETE MODULE ================= */
+    const handleDeleteClick = (module) => {
+        setSelectedModule(module);
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteModule = async () => {
+        try {
+            await api.delete(`/modules/${selectedModule.id}`);
+            setShowDeleteModal(false);
+            setSelectedModule(null);
+            fetchModules();
+            alert("Module supprimé avec succès!");
+        } catch (err) {
+            console.error("Delete module error:", err);
+            alert("Erreur lors de la suppression du module");
+        }
+    };
+
+    /* ================= IMPORT MODULES ================= */
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const validTypes = [
+                "text/csv",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ];
+            if (
+                !validTypes.includes(file.type) &&
+                !file.name.match(/\.(csv|xlsx|xls)$/)
+            ) {
+                alert("Format de fichier invalide. Utilisez CSV, XLS ou XLSX");
+                return;
+            }
+            setImportFile(file);
+        }
+    };
+
+    const handleImport = async () => {
+        if (!importFile) {
+            alert("Veuillez sélectionner un fichier");
+            return;
+        }
+
+        setImporting(true);
+        const formData = new FormData();
+        formData.append("file", importFile);
+
+        try {
+            const res = await api.post("/modules/import", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            setShowImportModal(false);
+            setImportFile(null);
+            fetchModules();
+
+            let message = res.data.message;
+            if (res.data.errors && res.data.errors.length > 0) {
+                message += "\n\nErreurs:\n" + res.data.errors.join("\n");
+            }
+            alert(message);
+        } catch (err) {
+            console.error("Import error:", err);
+            alert(
+                "Erreur lors de l'import: " +
+                    (err.response?.data?.error || err.message)
+            );
+        } finally {
+            setImporting(false);
+        }
+    };
+
+    /* ================= RESET FORMS ================= */
+    const resetNewForm = () => {
+        setNewModule({
+            code: "",
+            name: "",
+            semester: "",
+            teacher_responsible: "",
+        });
+    };
+
+    return (
+        <div className="module-management">
+            <div className="page-header">
+                <h1>Gestion des Modules</h1>
+                <div className="header-actions">
+                    <button
+                        className="btn-secondary"
+                        onClick={() => setShowImportModal(true)}
+                    >
+                        📁 Importer
+                    </button>
+                    <button className="btn-primary" onClick={handleAddClick}>
+                        + Ajouter Module
+                    </button>
+                </div>
+            </div>
+
+            <div className="table-container">
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Nom du Module</th>
+                            <th>Semestre</th>
+                            <th>Enseignant Responsable</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {modules.length > 0 ? (
+                            modules.map((module) => (
+                                <tr key={module.id}>
+                                    <td>{module.code}</td>
+                                    <td>{module.name}</td>
+                                    <td>{module.semester}</td>
+                                    <td>{module.teacher_responsible}</td>
+                                    <td>
+                                        <div className="action-buttons">
+                                            <button
+                                                className="btn-edit"
+                                                onClick={() =>
+                                                    handleEditClick(module)
+                                                }
+                                                title="Modifier"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn-delete"
+                                                onClick={() =>
+                                                    handleDeleteClick(module)
+                                                }
+                                                title="Supprimer"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="no-data">
+                                    Aucun module disponible
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* ================= ADD MODULE MODAL ================= */}
+            <Modal
+                isOpen={showAddModal}
+                onClose={() => {
+                    setShowAddModal(false);
+                    resetNewForm();
+                }}
+                title="Ajouter un Module"
+            >
+                <div className="form">
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Code du Module *</label>
+                            <input
+                                type="text"
+                                value={newModule.code}
+                                onChange={(e) =>
+                                    setNewModule({
+                                        ...newModule,
+                                        code: e.target.value,
+                                    })
+                                }
+                                placeholder="MATH101"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Nom du Module *</label>
+                            <input
+                                type="text"
+                                value={newModule.name}
+                                onChange={(e) =>
+                                    setNewModule({
+                                        ...newModule,
+                                        name: e.target.value,
+                                    })
+                                }
+                                placeholder="Mathématiques Fondamentales"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Semestre *</label>
+                            <select
+                                value={newModule.semester}
+                                onChange={(e) =>
+                                    setNewModule({
+                                        ...newModule,
+                                        semester: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="">Sélectionner</option>
+                                <option value="S1">Semestre 1</option>
+                                <option value="S2">Semestre 2</option>
+                                <option value="S3">Semestre 3</option>
+                                <option value="S4">Semestre 4</option>
+                                <option value="S5">Semestre 5</option>
+                                <option value="S6">Semestre 6</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Enseignant Responsable *</label>
+                            {teachers.length > 0 ? (
+                                <select
+                                    value={newModule.teacher_responsible}
+                                    onChange={(e) =>
+                                        setNewModule({
+                                            ...newModule,
+                                            teacher_responsible: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <option value="">
+                                        Sélectionner un enseignant
+                                    </option>
+                                    {teachers.map((teacher) => (
+                                        <option
+                                            key={teacher.id}
+                                            value={teacher.name}
+                                        >
+                                            {teacher.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={newModule.teacher_responsible}
+                                    onChange={(e) =>
+                                        setNewModule({
+                                            ...newModule,
+                                            teacher_responsible: e.target.value,
+                                        })
+                                    }
+                                    placeholder="Nom de l'enseignant"
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="form-actions">
+                        <button
+                            className="btn-secondary"
+                            onClick={() => {
+                                setShowAddModal(false);
+                                resetNewForm();
+                            }}
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleAddModule}
+                        >
+                            Ajouter le Module
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* ================= EDIT MODULE MODAL ================= */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setSelectedModule(null);
+                }}
+                title="Modifier le Module"
+            >
+                <div className="form">
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Code du Module *</label>
+                            <input
+                                type="text"
+                                value={editModule.code}
+                                onChange={(e) =>
+                                    setEditModule({
+                                        ...editModule,
+                                        code: e.target.value,
+                                    })
+                                }
+                                placeholder="MATH101"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Nom du Module *</label>
+                            <input
+                                type="text"
+                                value={editModule.name}
+                                onChange={(e) =>
+                                    setEditModule({
+                                        ...editModule,
+                                        name: e.target.value,
+                                    })
+                                }
+                                placeholder="Mathématiques Fondamentales"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Semestre *</label>
+                            <select
+                                value={editModule.semester}
+                                onChange={(e) =>
+                                    setEditModule({
+                                        ...editModule,
+                                        semester: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="">Sélectionner</option>
+                                <option value="S1">Semestre 1</option>
+                                <option value="S2">Semestre 2</option>
+                                <option value="S3">Semestre 3</option>
+                                <option value="S4">Semestre 4</option>
+                                <option value="S5">Semestre 5</option>
+                                <option value="S6">Semestre 6</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Enseignant Responsable *</label>
+                            {teachers.length > 0 ? (
+                                <select
+                                    value={editModule.teacher_responsible}
+                                    onChange={(e) =>
+                                        setEditModule({
+                                            ...editModule,
+                                            teacher_responsible: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <option value="">
+                                        Sélectionner un enseignant
+                                    </option>
+                                    {teachers.map((teacher) => (
+                                        <option
+                                            key={teacher.id}
+                                            value={teacher.name}
+                                        >
+                                            {teacher.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={editModule.teacher_responsible}
+                                    onChange={(e) =>
+                                        setEditModule({
+                                            ...editModule,
+                                            teacher_responsible: e.target.value,
+                                        })
+                                    }
+                                    placeholder="Nom de l'enseignant"
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="form-actions">
+                        <button
+                            className="btn-secondary"
+                            onClick={() => {
+                                setShowEditModal(false);
+                                setSelectedModule(null);
+                            }}
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleUpdateModule}
+                        >
+                            Modifier
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* ================= DELETE CONFIRMATION MODAL ================= */}
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setSelectedModule(null);
+                }}
+                title="Confirmer la suppression"
+            >
+                <div className="delete-confirmation">
+                    <p>Êtes-vous sûr de vouloir supprimer ce module ?</p>
+                    {selectedModule && (
+                        <div className="exam-details">
+                            <p>
+                                <strong>Code:</strong> {selectedModule.code}
+                            </p>
+                            <p>
+                                <strong>Nom:</strong> {selectedModule.name}
+                            </p>
+                            <p>
+                                <strong>Semestre:</strong>{" "}
+                                {selectedModule.semester}
+                            </p>
+                        </div>
+                    )}
+                    <div className="form-actions">
+                        <button
+                            className="btn-secondary"
+                            onClick={() => {
+                                setShowDeleteModal(false);
+                                setSelectedModule(null);
+                            }}
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            className="btn-danger"
+                            onClick={handleDeleteModule}
+                        >
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* ================= IMPORT MODAL ================= */}
+            <Modal
+                isOpen={showImportModal}
+                onClose={() => {
+                    setShowImportModal(false);
+                    setImportFile(null);
+                }}
+                title="Importer des Modules"
+            >
+                <div className="import-form">
+                    <div className="import-instructions">
+                        <h3>Instructions d'import</h3>
+                        <p>
+                            Le fichier doit contenir les colonnes suivantes dans
+                            cet ordre:
+                        </p>
+                        <ol>
+                            <li>
+                                <strong>Nom du module</strong>
+                            </li>
+                            <li>
+                                <strong>Code du module</strong>
+                            </li>
+                            <li>
+                                <strong>Semestre</strong> (S1, S2, etc.)
+                            </li>
+                            <li>
+                                <strong>Enseignant responsable</strong>
+                            </li>
+                        </ol>
+                        <p>Formats acceptés: CSV, XLS, XLSX</p>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Sélectionner un fichier *</label>
+                        <input
+                            type="file"
+                            accept=".csv,.xls,.xlsx"
+                            onChange={handleFileChange}
+                        />
+                        {importFile && (
+                            <p className="file-selected">
+                                Fichier sélectionné: {importFile.name}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="form-actions">
+                        <button
+                            className="btn-secondary"
+                            onClick={() => {
+                                setShowImportModal(false);
+                                setImportFile(null);
+                            }}
+                            disabled={importing}
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleImport}
+                            disabled={!importFile || importing}
+                        >
+                            {importing ? "Import en cours..." : "Importer"}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
-      </div>
-
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Nom</th>
-              <th>Semestre</th>
-              <th>Enseignant</th>
-              <th>Crédits</th>
-              <th>Niveau</th>
-              <th>Spécialité</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {modules.map(module => (
-              <tr key={module.id}>
-                <td>{module.code}</td>
-                <td>{module.name}</td>
-                <td>{module.semester}</td>
-                <td>{module.teacher}</td>
-                <td>{module.credits}</td>
-                <td>{module.level}</td>
-                <td>{module.specialty}</td>
-                <td>
-                  <button className="btn-edit">Modifier</button>
-                  <button className="btn-delete">Supprimer</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add Module Modal */}
-      <Modal 
-        isOpen={showAddModal} 
-        onClose={() => {
-          setShowAddModal(false);
-          resetForm();
-        }}
-        title="Ajouter un Module"
-        size="lg"
-      >
-        <div className="form">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Code du Module *</label>
-              <input 
-                type="text" 
-                value={newModule.code}
-                onChange={(e) => setNewModule({...newModule, code: e.target.value})}
-                placeholder="MATH101"
-              />
-            </div>
-            <div className="form-group">
-              <label>Nom du Module *</label>
-              <input 
-                type="text" 
-                value={newModule.name}
-                onChange={(e) => setNewModule({...newModule, name: e.target.value})}
-                placeholder="Mathématiques Fondamentales"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Semestre *</label>
-              <select 
-                value={newModule.semester}
-                onChange={(e) => setNewModule({...newModule, semester: e.target.value})}
-              >
-                <option value="">Sélectionner</option>
-                <option value="S1">Semestre 1</option>
-                <option value="S2">Semestre 2</option>
-                <option value="S3">Semestre 3</option>
-                <option value="S4">Semestre 4</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Enseignant Responsable *</label>
-              <input 
-                type="text" 
-                value={newModule.teacher}
-                onChange={(e) => setNewModule({...newModule, teacher: e.target.value})}
-                placeholder="Nom de l'enseignant"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Crédits</label>
-              <input 
-                type="number" 
-                value={newModule.credits}
-                onChange={(e) => setNewModule({...newModule, credits: e.target.value})}
-                placeholder="6"
-              />
-            </div>
-            <div className="form-group">
-              <label>Niveau</label>
-              <select 
-                value={newModule.level}
-                onChange={(e) => setNewModule({...newModule, level: e.target.value})}
-              >
-                <option value="">Sélectionner</option>
-                <option value="L1">Licence 1</option>
-                <option value="L2">Licence 2</option>
-                <option value="L3">Licence 3</option>
-                <option value="M1">Master 1</option>
-                <option value="M2">Master 2</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Spécialité</label>
-            <select 
-              value={newModule.specialty}
-              onChange={(e) => setNewModule({...newModule, specialty: e.target.value})}
-            >
-              <option value="">Sélectionner</option>
-              <option value="Informatique">Informatique</option>
-              <option value="Mathématiques">Mathématiques</option>
-              <option value="Physique">Physique</option>
-              <option value="Chimie">Chimie</option>
-            </select>
-          </div>
-
-          <div className="form-actions">
-            <button 
-              className="btn-secondary"
-              onClick={() => {
-                setShowAddModal(false);
-                resetForm();
-              }}
-            >
-              Annuler
-            </button>
-            <button 
-              className="btn-primary"
-              onClick={handleAddModule}
-            >
-              Ajouter le Module
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Import Modal */}
-      <Modal 
-        isOpen={showImportModal} 
-        onClose={() => setShowImportModal(false)}
-        title="Importer des Modules"
-      >
-        <FileImport type="modules" onImport={handleImport} />
-      </Modal>
-    </div>
-  );
+    );
 };
 
 export default ModuleManagement;

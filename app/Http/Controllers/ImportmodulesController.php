@@ -5,16 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Module;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class ImportmodulesController extends Controller
 {
-    public function showForm()
-    {
-        return view('admin.modules.import');
-    }
-
+    /
+     * Import modules from file (CSV or Excel)
+     */
     public function import(Request $request)
     {
         $request->validate([
@@ -25,45 +21,57 @@ class ImportmodulesController extends Controller
             $file = $request->file('file');
             $extension = $file->getClientOriginalExtension();
             
-            // Si c'est un fichier Excel
+            // Handle Excel files
             if (in_array($extension, ['xlsx', 'xls'])) {
                 return $this->importExcel($file);
             }
             
-            // Si c'est un CSV
+            // Handle CSV files
             return $this->importCsv($file);
             
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Erreur lors de l\'import : ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Erreur lors de l\'import',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
     
+    /
+     * Import from Excel file
+     */
     private function importExcel($file)
     {
         $imported = 0;
         $errors = [];
         
-        $data = Excel::toArray([], $file)[0]; // Première feuille
+        $data = Excel::toArray([], $file)[0]; // First sheet
         
-        // Skip header (première ligne)
+        // Skip header row
         array_shift($data);
         
         foreach ($data as $index => $row) {
-            $line = $index + 2; // +2 car on a skip le header et Excel commence à 1
+            $line = $index + 2; // +2 because we skipped header and Excel starts at 1
             
-            // Vérifier que la ligne n'est pas vide
+            // Check if row is not empty
             if (empty(array_filter($row))) {
                 continue;
             }
             
-            // Vérifier qu'on a au moins 4 colonnes
+            // Check if we have at least 4 columns
             if (count($row) < 4) {
                 $errors[] = "Ligne $line : données incomplètes";
                 continue;
             }
             
             try {
+                // Check for duplicate code
+                $existingModule = Module::where('code', trim($row[1]))->first();
+                if ($existingModule) {
+                    $errors[] = "Ligne $line : le code " . trim($row[1]) . " existe déjà";
+                    continue;
+                }
+
                 Module::create([
                     'name' => trim($row[0]),
                     'code' => trim($row[1]),
@@ -76,16 +84,16 @@ class ImportmodulesController extends Controller
             }
         }
         
-        $message = "$imported module(s) importé(s) avec succès !";
-        if (!empty($errors)) {
-            $message .= " (" . count($errors) . " erreur(s))";
-        }
-        
-        return redirect()->route('admin.modules.index')
-            ->with('success', $message)
-            ->with('import_errors', $errors);
+        return response()->json([
+            'message' => "$imported module(s) importé(s) avec succès",
+            'imported' => $imported,
+            'errors' => $errors
+        ]);
     }
     
+    /**
+     * Import from CSV file
+     */
     private function importCsv($file)
     {
         $handle = fopen($file->getRealPath(), 'r');
@@ -104,17 +112,24 @@ class ImportmodulesController extends Controller
         while (($row = fgetcsv($handle, 1000, ';')) !== false) {
             $line++;
             
+            // Skip empty rows
             if (empty(array_filter($row))) {
                 continue;
             }
             
+            // Check if we have at least 4 columns
             if (count($row) < 4) {
                 $errors[] = "Ligne $line : données incomplètes";
                 continue;
             }
             
             try {
-                Module::create([
+                // Check for duplicate code
+                $existingModule = Module::where('code', trim($row[1]))->first();
+                if ($existingModule) {
+                    $errors[] = "Ligne $line : le code " . trim($row[1]) . " existe déjà";
+                    continue;
+                }Module::create([
                     'name' => trim($row[0]),
                     'code' => trim($row[1]),
                     'semester' => trim($row[2]),
@@ -128,13 +143,10 @@ class ImportmodulesController extends Controller
         
         fclose($handle);
         
-        $message = "$imported module(s) importé(s) avec succès !";
-        if (!empty($errors)) {
-            $message .= " (" . count($errors) . " erreur(s))";
-        }
-        
-        return redirect()->route('admin.modules.index')
-            ->with('success', $message)
-            ->with('import_errors', $errors);
+        return response()->json([
+            'message' => "$imported module(s) importé(s) avec succès",
+            'imported' => $imported,
+            'errors' => $errors
+        ]);
     }
 }

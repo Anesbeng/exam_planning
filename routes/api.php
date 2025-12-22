@@ -8,6 +8,8 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ImportmodulesController;
 
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -28,4 +30,8 @@ Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::get('/users', [UserController::class, 'index']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+
+Route::resource('modules', ModuleController::class);
+Route::post('/modules/import', [ImportmodulesController::class, 'import']);
 

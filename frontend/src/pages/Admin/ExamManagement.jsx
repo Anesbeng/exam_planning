@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
-import "./ExamManagement.css";
+import "./exam-Management.css";
 
 const ExamManagement = () => {
     const [showAddExamModal, setShowAddExamModal] = useState(false);
