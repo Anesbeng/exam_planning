@@ -6,6 +6,8 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -22,4 +24,8 @@ Route::resource('exams', ExamController::class);
 
 Route::resource('students', StudentController::class);
 Route::resource('import', ImportController ::class);
+Route::get('/dashboard', [DashboardController::class, 'index']);
+Route::get('/users', [UserController::class, 'index']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 

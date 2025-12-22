@@ -1,141 +1,129 @@
-/* Exam Management Container */
-.exam-management {
-    padding: 20px;
-    max-width: 1400px;
-    margin: 0 auto;
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-/* Page Header */
-.page-header {
+/* Modal Content */
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Header */
+.modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #e5e7eb;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.page-header h1 {
-    font-size: 2rem;
-    color: #1f2937;
+.modal-header h2 {
     margin: 0;
-}
-
-.page-header .btn-primary {
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.page-header .btn-primary:hover {
-    background-color: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-}
-
-/* Exam Section */
-.exam-section {
-    margin-bottom: 40px;
-}
-
-.exam-section h2 {
     font-size: 1.5rem;
-    color: #374151;
-    margin-bottom: 15px;
-    padding-left: 10px;
-    border-left: 4px solid #3b82f6;
+    color: #1f2937;
 }
 
-/* Data Table */
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.data-table thead {
-    background-color: #f9fafb;
-}
-
-.data-table th {
-    padding: 15px;
-    text-align: left;
-    font-weight: 600;
-    color: #374151;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.data-table td {
-    padding: 15px;
-    color: #6b7280;
-    border-bottom: 1px solid #f3f4f6;
-}
-
-.data-table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.data-table tbody tr:hover {
-    background-color: #f9fafb;
-}
-
-.data-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.no-data {
-    text-align: center;
-    color: #9ca3af;
-    font-style: italic;
-    padding: 40px !important;
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-.btn-edit,
-.btn-delete {
+.modal-close {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 2rem;
+    color: #6b7280;
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 4px;
     transition: all 0.2s;
 }
 
-.btn-edit:hover {
-    background-color: #dbeafe;
+.modal-close:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
 }
 
-.btn-delete:hover {
-    background-color: #fee2e2;
+/* Modal Body */
+.modal-body {
+    padding: 20px;
 }
 
-.btn-danger {
-    background-color: #dc2626;
-    color: white;
-    border: none;
+/* Form Styles */
+.add-exam-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input::placeholder {
+    color: #9ca3af;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
     padding: 10px 20px;
+    border: none;
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
@@ -143,77 +131,36 @@
     transition: all 0.2s;
 }
 
-.btn-danger:hover {
-    background-color: #b91c1c;
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
 }
 
-/* Delete Confirmation */
-.delete-confirmation {
-    padding: 10px 0;
+.btn-primary:hover {
+    background-color: #2563eb;
 }
 
-.delete-confirmation p {
-    font-size: 1rem;
+.btn-secondary {
+    background-color: #f3f4f6;
     color: #374151;
-    margin-bottom: 20px;
 }
 
-.exam-details {
-    background-color: #f9fafb;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-}
-
-.exam-details p {
-    margin: 8px 0;
-    color: #6b7280;
-}
-
-.exam-details strong {
-    color: #374151;
-    margin-right: 8px;
+.btn-secondary:hover {
+    background-color: #e5e7eb;
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-    .data-table {
-        font-size: 0.9rem;
-    }
-
-    .data-table th,
-    .data-table td {
-        padding: 10px;
-    }
-
-    .action-buttons {
-        flex-direction: column;
-        gap: 4px;
-    }
-}
-
 @media (max-width: 768px) {
-    .exam-management {
-        padding: 15px;
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
     }
 
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+    .form-row {
+        grid-template-columns: 1fr;
     }
 
-    .page-header h1 {
-        font-size: 1.5rem;
-    }
-
-    .data-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    .exam-section h2 {
+    .modal-header h2 {
         font-size: 1.25rem;
     }
 }
