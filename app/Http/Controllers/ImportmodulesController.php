@@ -8,9 +8,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ImportmodulesController extends Controller
 {
-    /
-     * Import modules from file (CSV or Excel)
-     */
+  
     public function import(Request $request)
     {
         $request->validate([
@@ -37,9 +35,7 @@ class ImportmodulesController extends Controller
         }
     }
     
-    /
-     * Import from Excel file
-     */
+    
     private function importExcel($file)
     {
         $imported = 0;
