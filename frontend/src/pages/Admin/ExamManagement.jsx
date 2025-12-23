@@ -11,7 +11,7 @@ const ExamManagement = () => {
     const [selectedExam, setSelectedExam] = useState(null);
 
     const [newExam, setNewExam] = useState({
-        type: "Examen",
+        type: "examen",
         module: "",
         teacher: "",
         room: "",
@@ -64,7 +64,7 @@ const ExamManagement = () => {
     const handleAddExam = async () => {
         try {
             await api.post("/exams", {
-                type: newExam.type.toLowerCase(),
+                type: newExam.type,
                 module: newExam.module,
                 teacher: newExam.teacher,
                 room: newExam.room,
@@ -81,7 +81,7 @@ const ExamManagement = () => {
 
             // Reset form
             setNewExam({
-                type: "Examen",
+                type: "examen",
                 module: "",
                 teacher: "",
                 room: "",
@@ -105,7 +105,7 @@ const ExamManagement = () => {
     const handleEditClick = async (exam) => {
         setSelectedExam(exam);
         setEditExam({
-            type: exam.type.charAt(0).toUpperCase() + exam.type.slice(1),
+            type: exam.type,
             module: exam.module,
             teacher: exam.teacher || "",
             room: exam.room,
@@ -122,7 +122,7 @@ const ExamManagement = () => {
     const handleUpdateExam = async () => {
         try {
             await api.put(`/exams/${selectedExam.id}`, {
-                type: editExam.type.toLowerCase(),
+                type: editExam.type,
                 module: editExam.module,
                 teacher: editExam.teacher,
                 room: editExam.room,
@@ -220,7 +220,7 @@ const ExamManagement = () => {
                     onCancel={() => {
                         setShowAddExamModal(false);
                         setNewExam({
-                            type: "Examen",
+                            type: "examen",
                             module: "",
                             teacher: "",
                             room: "",
@@ -312,16 +312,11 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel }) => (
                 <label>Type</label>
                 <select
                     value={exam.type}
-                    onChange={(e) =>
-                        setExam({
-                            ...exam,
-                            type: e.target.value,
-                        })
-                    }
+                    onChange={(e) => setExam({ ...exam, type: e.target.value })}
                 >
-                    <option value="Examen">Examen</option>
-                    <option value="CC">Contrôle Continu</option>
-                    <option value="Rattrapage">Rattrapage</option>
+                    <option value="examen">Examen</option>
+                    <option value="cc">Contrôle Continu</option>
+                    <option value="rattrapage">Rattrapage</option>
                 </select>
             </div>
 
