@@ -2,73 +2,120 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\salle;
+use App\Models\Salle;
 use Illuminate\Http\Request;
 
 class SalleController extends Controller
 {
+    /**
+     * Display a listing of rooms
+     */
     public function index()
     {
-        $salle = salle::all();
-        return view('admin.salle.index', compact('salle'));
+        $salles = Salle::all();
+        return response()->json([
+            'salles' => $salles
+        ]);
     }
 
+    /**
+     * Show the form for creating a new room
+     */
     public function create()
     {
-        return view('admin.salle.create');
+        return response()->json([
+            'message' => 'Ready to create'
+        ]);
     }
 
+    /**
+     * Store a newly created room
+     */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'capacity' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1',
             'location' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'equipment' => 'nullable|string|max:500',
         ]);
 
-        salle::create([
+        $salle = Salle::create([
             'name' => $request->name,
             'capacity' => $request->capacity,
             'location' => $request->location,
+            'type' => $request->type,
+            'equipment' => $request->equipment,
         ]);
 
-        return redirect()->route('admin.salle.index')
-                         ->with('success', 'Module créé avec succès');
+        return response()->json([
+            'message' => 'Salle créée avec succès',
+            'salle' => $salle
+        ], 201);
     }
 
-    public function show(salle $salle)
+    /**
+     * Display the specified room
+     */
+    public function show($id)
     {
-        return view('admin.salle.show', compact('salle'));
+        $salle = Salle::findOrFail($id);
+        return response()->json([
+            'salle' => $salle
+        ]);
     }
 
-    public function edit(salle $salle)
+    /**
+     * Show the form for editing the specified room
+     */
+    public function edit($id)
     {
-        return view('admin.salle.edit', compact('salle'));
+        $salle = Salle::findOrFail($id);
+        return response()->json([
+            'salle' => $salle
+        ]);
     }
 
-    public function update(Request $request, salle $salle)
+    /**
+     * Update the specified room
+     */
+    public function update(Request $request, $id)
     {
+        $salle = Salle::findOrFail($id);
+        
         $request->validate([
             'name' => 'required|string|max:255',
-            'capacity' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1',
             'location' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'equipment' => 'nullable|string|max:500',
         ]);
 
         $salle->update([
             'name' => $request->name,
             'capacity' => $request->capacity,
             'location' => $request->location,
+            'type' => $request->type,
+            'equipment' => $request->equipment,
         ]);
 
-        return redirect()->route('admin.salle.index')
-                         ->with('success', 'Module mis à jour');
+        return response()->json([
+            'message' => 'Salle mise à jour avec succès',
+            'salle' => $salle
+        ]);
     }
 
-    public function destroy(salle $salle)
+    /**
+     * Remove the specified room
+     */
+    public function destroy($id)
     {
+        $salle = Salle::findOrFail($id);
         $salle->delete();
 
-        return redirect()->route('admin.salle.index')
-                         ->with('success', 'Module supprimé');
+        return response()->json([
+            'message' => 'Salle supprimée avec succès'
+        ]);
     }
 }

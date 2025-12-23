@@ -1,13 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\User;
+
+use App\Models\User; // Using the same User model
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class TeacherController extends Controller
 {
-   
     public function index(Request $request)
     {
         $query = User::where('role', 'teacher');
@@ -25,60 +26,88 @@ class TeacherController extends Controller
 
         $teachers = $query->get();
 
-        return view('admin.teachers.index', compact('teachers'));
-    }
-
-    public function create()
-    {
-        return view('admin.teachers.create');
+        return response()->json(['teachers' => $teachers]);
     }
 
     public function store(Request $request)
     {
-        User::create([
+        $validator = Validator::make($request->all(), [
+            'matricule' => 'required|unique:users,matricule',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'specialite' => 'nullable|string',
+            'niveau' => 'nullable|string',
+            'annee_scolaire' => 'nullable|string',
+            'groupe' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $teacher = User::create([
             'matricule' => $request->matricule,
             'name' => $request->name,
             'email' => $request->email,
             'role' => 'teacher',
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'specialite' => $request->specialite,
-            'niveau' => 'null',
-            'annee_scolaire' => 'null',
-            'groupe' => 'null',
+            'niveau' => $request->niveau,
+            'annee_scolaire' => $request->annee_scolaire,
+            'groupe' => $request->groupe,
         ]);
 
-        return redirect()->route('admin.teachers.index')
-            ->with('success', 'Student added successfully');
+        return response()->json(['teacher' => $teacher], 201);
     }
 
-    public function edit($id)
+    public function show($id)
     {
-        $teacher = User::findOrFail($id);
-        return view('admin.teachers.edit', compact('teacher'));
+        $teacher = User::where('role', 'teacher')->findOrFail($id);
+        return response()->json(['teacher' => $teacher]);
     }
 
     public function update(Request $request, $id)
     {
-        $teacher = User::findOrFail($id);
+        $teacher = User::where('role', 'teacher')->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'matricule' => 'required|unique:users,matricule,' . $id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'specialite' => 'nullable|string',
+            'niveau' => 'nullable|string',
+            'annee_scolaire' => 'nullable|string',
+            'groupe' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         $teacher->update([
             'matricule' => $request->matricule,
             'name' => $request->name,
             'email' => $request->email,
             'specialite' => $request->specialite,
-
+            'niveau' => $request->niveau,
+            'annee_scolaire' => $request->annee_scolaire,
+            'groupe' => $request->groupe,
         ]);
 
-        return redirect()->route('admin.teachers.index')
-            ->with('success', 'Student updated successfully');
+        // Update password if provided
+        if ($request->filled('password')) {
+            $teacher->update(['password' => Hash::make($request->password)]);
+        }
+
+        return response()->json(['teacher' => $teacher]);
     }
 
     public function destroy($id)
     {
-        User::findOrFail($id)->delete();
+        $teacher = User::where('role', 'teacher')->findOrFail($id);
+        $teacher->delete();
 
-        return redirect()->route('admin.teachers.index')
-            ->with('success', 'Student deleted');
+        return response()->json(['message' => 'Teacher deleted successfully']);
     }
 }
-

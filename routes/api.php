@@ -10,6 +10,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ImportmodulesController;
+use App\Http\Controllers\SalleController;
+use App\Http\Controllers\ImportSallesController;
+use App\Http\Controllers\TeacherController;
 
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -35,3 +38,9 @@ Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::resource('modules', ModuleController::class);
 Route::post('/modules/import', [ImportmodulesController::class, 'import']);
 
+
+Route::resource('salles', SalleController::class);
+
+
+Route::post('/salles/import', [ImportSallesController::class, 'import']);
+Route::resource('teachers', TeacherController::class);
