@@ -13,6 +13,7 @@ use App\Http\Controllers\ImportmodulesController;
 use App\Http\Controllers\SalleController;
 use App\Http\Controllers\ImportSallesController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\StudentExamController;
 
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -44,3 +45,6 @@ Route::resource('salles', SalleController::class);
 
 Route::post('/salles/import', [ImportSallesController::class, 'import']);
 Route::resource('teachers', TeacherController::class);
+
+
+Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
