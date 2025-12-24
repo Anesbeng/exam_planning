@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User; // Using the same User model
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -14,100 +14,76 @@ class TeacherController extends Controller
         $query = User::where('role', 'teacher');
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%')
-                  ->orWhere('matricule', 'like', '%' . $request->search . '%')
-                  ->orWhere('specialite', 'like', '%' . $request->search . '%')
-                  ->orWhere('niveau', 'like', '%' . $request->search . '%')
-                  ->orWhere('groupe', 'like', '%' . $request->search . '%');
-            });
+            $query->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('email', 'like', "%{$request->search}%")
+                  ->orWhere('matricule', 'like', "%{$request->search}%");
         }
 
-        $teachers = $query->get();
-
-        return response()->json(['teachers' => $teachers]);
+        return response()->json(['teachers' => $query->get()]);
     }
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'matricule' => 'required|unique:users,matricule',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+        $request->validate([
+            'matricule' => 'required|unique:users',
+            'name' => 'required',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'specialite' => 'nullable|string',
-            'niveau' => 'nullable|string',
-            'annee_scolaire' => 'nullable|string',
-            'groupe' => 'nullable|string',
+            'specialite' => 'required',
+            
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $teacher = User::create([
+        User::create([
             'matricule' => $request->matricule,
             'name' => $request->name,
             'email' => $request->email,
             'role' => 'teacher',
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
             'specialite' => $request->specialite,
-            'niveau' => $request->niveau,
+            'niveau' => 'null',
+            'groupe' => 'null',
             'annee_scolaire' => $request->annee_scolaire,
-            'groupe' => $request->groupe,
         ]);
-
-        return response()->json(['teacher' => $teacher], 201);
-    }
-
-    public function show($id)
-    {
-        $teacher = User::where('role', 'teacher')->findOrFail($id);
-        return response()->json(['teacher' => $teacher]);
     }
 
     public function update(Request $request, $id)
     {
-        $teacher = User::where('role', 'teacher')->findOrFail($id);
+        $teacher = User::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'matricule' => 'required|unique:users,matricule,' . $id,
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'specialite' => 'nullable|string',
-            'niveau' => 'nullable|string',
-            'annee_scolaire' => 'nullable|string',
-            'groupe' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $teacher->update([
-            'matricule' => $request->matricule,
-            'name' => $request->name,
-            'email' => $request->email,
-            'specialite' => $request->specialite,
-            'niveau' => $request->niveau,
-            'annee_scolaire' => $request->annee_scolaire,
-            'groupe' => $request->groupe,
-        ]);
-
-        // Update password if provided
+        $data = $request->except('password');
         if ($request->filled('password')) {
-            $teacher->update(['password' => Hash::make($request->password)]);
+            $data['password'] = Hash::make($request->password);
         }
 
-        return response()->json(['teacher' => $teacher]);
+        $teacher->update($data);
     }
 
     public function destroy($id)
     {
-        $teacher = User::where('role', 'teacher')->findOrFail($id);
-        $teacher->delete();
+        User::findOrFail($id)->delete();
+    }
 
-        return response()->json(['message' => 'Teacher deleted successfully']);
+    /* ========= CSV IMPORT ========= */
+    public function import(Request $request)
+    {
+        $file = fopen($request->file('file'), 'r');
+        fgetcsv($file, 1000, ';'); // header
+
+        while (($row = fgetcsv($file, 1000, ';')) !== false) {
+            User::create([
+                'matricule' => $row[0],
+                'name' => $row[1],
+                'email' => $row[2],
+                'password' => $row[3],
+                'specialite' => $row[4],
+                'niveau' => $row[5],
+                'annee_scolaire' => $row[6],
+                'groupe' => $row[7],
+                'role' => 'teacher',
+            ]);
+        }
+        fclose($file);
+
+        return response()->json(['message' => 'Import réussi']);
     }
 }

@@ -1,468 +1,466 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../UI/Modal";
 import api from "../../api/axios";
+import "./teacher-management.css";
 
 const TeacherManagement = () => {
     const [teachers, setTeachers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
 
-    // Modals
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
 
-    // Teacher to edit
-    const [editTeacher, setEditTeacher] = useState(null);
+    const [editingTeacher, setEditingTeacher] = useState(null);
 
-    // Search
-    const [search, setSearch] = useState("");
-
-    // Import state
     const [importFile, setImportFile] = useState(null);
     const [importing, setImporting] = useState(false);
 
-    // Form state
-    const [newTeacher, setNewTeacher] = useState({
+    const [form, setForm] = useState({
         matricule: "",
-        firstName: "",
-        lastName: "",
+        name: "",
         email: "",
         password: "",
         specialite: "",
-        niveau: "",
-        annee_scolaire: "",
-        groupe: "",
-        status: "Actif",
+        annee_scolaire: new Date().getFullYear().toString(),
     });
 
-    // Fetch teachers
+    /* ================= FETCH ================= */
+    useEffect(() => {
+        fetchTeachers();
+    }, [search]);
+
     const fetchTeachers = async () => {
         try {
+            setLoading(true);
             const res = await api.get("/teachers", { params: { search } });
-            setTeachers(res.data.teachers || []);
-        } catch (err) {
-            console.error(err);
+            setTeachers(res.data.teachers);
+        } catch (error) {
+            console.error(error);
+            alert("Erreur de chargement des enseignants");
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchTeachers();
-    }, [search]);
-
-    // Reset form
+    /* ================= FORM ================= */
     const resetForm = () => {
-        setNewTeacher({
+        setForm({
             matricule: "",
-            firstName: "",
-            lastName: "",
+            name: "",
             email: "",
             password: "",
             specialite: "",
-            niveau: "",
-            annee_scolaire: "",
-            groupe: "",
-            status: "Actif",
+            annee_scolaire: new Date().getFullYear().toString(),
         });
     };
 
-    // Add teacher
-    const handleAddTeacher = async () => {
+    /* ================= ADD ================= */
+    const handleAdd = async () => {
         try {
-            const res = await api.post("/teachers", {
-                ...newTeacher,
-                name: newTeacher.lastName,
+            await api.post("/teachers", {
+                ...form,
+                role: "teacher", // ✅ REQUIRED
             });
-            setTeachers([...teachers, res.data.teacher]);
+
+            alert("Enseignant ajouté");
             setShowAddModal(false);
             resetForm();
-        } catch (err) {
-            console.error(err);
+            fetchTeachers();
+        } catch (error) {
+            console.error(error);
+            alert(
+                error.response?.data?.message ||
+                    "Erreur lors de l'ajout de l'enseignant"
+            );
         }
     };
 
-    // Edit teacher
-    const handleEditTeacher = (teacher) => {
-        setEditTeacher(teacher);
-        setNewTeacher({
-            matricule: teacher.matricule,
-            firstName: teacher.firstName || "",
-            lastName: teacher.name || "",
-            email: teacher.email,
+    /* ================= EDIT ================= */
+    const handleEditClick = (teacher) => {
+        setEditingTeacher(teacher);
+        setForm({
+            matricule: teacher.matricule || "",
+            name: teacher.name || "",
+            email: teacher.email || "",
             password: "",
             specialite: teacher.specialite || "",
-            niveau: teacher.niveau || "",
             annee_scolaire: teacher.annee_scolaire || "",
-            groupe: teacher.groupe || "",
-            status: teacher.status || "Actif",
         });
         setShowEditModal(true);
     };
 
-    const handleUpdateTeacher = async () => {
+    const handleUpdate = async () => {
         try {
-            const payload = {
-                ...newTeacher,
-                name: newTeacher.lastName,
-                password: newTeacher.password || undefined,
-            };
-            const res = await api.put(`/teachers/${editTeacher.id}`, payload);
-            setTeachers(
-                teachers.map((t) =>
-                    t.id === editTeacher.id ? res.data.teacher : t
-                )
-            );
+            const data = { ...form };
+            if (!data.password) delete data.password;
+
+            await api.put(`/teachers/${editingTeacher.id}`, data);
+
+            alert("Enseignant modifié");
             setShowEditModal(false);
+            setEditingTeacher(null);
             resetForm();
-        } catch (err) {
-            console.error(err);
+            fetchTeachers();
+        } catch (error) {
+            console.error(error);
+            alert(
+                error.response?.data?.message ||
+                    "Erreur lors de la modification"
+            );
         }
     };
 
-    // Delete teacher
-    const handleDeleteTeacher = async (id) => {
-        if (!window.confirm("Voulez-vous supprimer cet enseignant ?")) return;
+    /* ================= DELETE ================= */
+    const handleDelete = async (id) => {
+        if (!window.confirm("Supprimer cet enseignant ?")) return;
+
         try {
             await api.delete(`/teachers/${id}`);
-            setTeachers(teachers.filter((t) => t.id !== id));
-        } catch (err) {
-            console.error(err);
+            fetchTeachers();
+        } catch (error) {
+            console.error(error);
+            alert("Erreur lors de la suppression");
         }
     };
 
-    // Import CSV
+    /* ================= CSV IMPORT ================= */
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.name.endsWith(".csv")) {
+            alert("Veuillez sélectionner un fichier CSV");
+            e.target.value = "";
+            return;
+        }
+
+        setImportFile(file);
+    };
+
     const handleImport = async () => {
-        if (!importFile) return;
-        setImporting(true);
+        if (!importFile) {
+            alert("Veuillez sélectionner un fichier CSV");
+            return;
+        }
+
         try {
-            // Simulate import
-            alert(`Enseignants importés depuis ${importFile.name}`);
+            setImporting(true);
+            const formData = new FormData();
+            formData.append("file", importFile);
+
+            const res = await api.post("/import", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            alert(res.data.message || "Import réussi");
             setShowImportModal(false);
             setImportFile(null);
-        } catch (err) {
-            console.error(err);
+            fetchTeachers();
+        } catch (error) {
+            console.error(error);
+            alert(
+                error.response?.data?.message || "Erreur lors de l'importation"
+            );
         } finally {
             setImporting(false);
         }
     };
 
-    if (loading) return <p>Loading...</p>;
+    const downloadTemplate = () => {
+        const csv =
+            "matricule;name;email;password;specialite;annee_scolaire\n" +
+            "ENS001;Ahmed Ali;ahmed@edu.dz;password123;Informatique;2024\n";
 
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "template_enseignants.csv";
+        link.click();
+    };
+
+    /* ================= RENDER ================= */
     return (
-        <div className="teacher-management">
+        <div className="student-management">
             <div className="page-header">
                 <h1>Gestion des Enseignants</h1>
                 <div className="header-actions">
                     <input
-                        type="text"
                         placeholder="Recherche..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
-                    <button
-                        className="btn-secondary"
-                        onClick={() => setShowImportModal(true)}
-                    >
-                        📁 Importer
+                    <button onClick={() => setShowImportModal(true)}>
+                        📁 Import CSV
                     </button>
-                    <button
-                        className="btn-primary"
-                        onClick={() => setShowAddModal(true)}
-                    >
-                        + Ajouter Enseignant
+                    <button onClick={() => setShowAddModal(true)}>
+                        + Ajouter
                     </button>
                 </div>
             </div>
 
-            <div className="table-container">
+            {loading ? (
+                <div className="loading">Chargement...</div>
+            ) : (
                 <table className="data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Matricule</th>
                             <th>Nom</th>
-                            <th>Prénom</th>
                             <th>Email</th>
                             <th>Spécialité</th>
-                            <th>Niveau</th>
-                            <th>Groupe</th>
-                            <th>Année Scolaire</th>
-                            <th>Statut</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {teachers.map((teacher) => (
-                            <tr key={teacher.id}>
-                                <td>{teacher.id}</td>
-                                <td>{teacher.matricule}</td>
-                                <td>{teacher.name}</td>
-                                <td>{teacher.firstName}</td>
-                                <td>{teacher.email}</td>
-                                <td>{teacher.specialite}</td>
-                                <td>{teacher.niveau}</td>
-                                <td>{teacher.groupe}</td>
-                                <td>{teacher.annee_scolaire}</td>
+                        {teachers.map((t) => (
+                            <tr key={t.id}>
+                                <td>{t.matricule}</td>
+                                <td>{t.name}</td>
+                                <td>{t.email}</td>
+                                <td>{t.specialite}</td>
                                 <td>
-                                    <span
-                                        className={`status ${
-                                            teacher.status === "Actif"
-                                                ? "active"
-                                                : "inactive"
-                                        }`}
-                                    >
-                                        {teacher.status}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button
-                                        className="btn-edit"
-                                        onClick={() =>
-                                            handleEditTeacher(teacher)
-                                        }
-                                    >
-                                        Modifier
+                                    <button onClick={() => handleEditClick(t)}>
+                                        ✏️
                                     </button>
-                                    <button
-                                        className="btn-delete"
-                                        onClick={() =>
-                                            handleDeleteTeacher(teacher.id)
-                                        }
-                                    >
-                                        Supprimer
+                                    <button onClick={() => handleDelete(t.id)}>
+                                        🗑️
                                     </button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-            </div>
+            )}
 
-            {/* Add/Edit Modal */}
+            {/* ADD MODAL */}
             <Modal
-                isOpen={showAddModal || showEditModal}
+                isOpen={showAddModal}
                 onClose={() => {
                     setShowAddModal(false);
-                    setShowEditModal(false);
                     resetForm();
                 }}
-                title={
-                    showAddModal
-                        ? "Ajouter un Enseignant"
-                        : "Modifier Enseignant"
-                }
+                title="Ajouter un Enseignant"
+                size="lg"
             >
-                <TeacherForm
-                    newTeacher={newTeacher}
-                    setNewTeacher={setNewTeacher}
-                    onSubmit={
-                        showAddModal ? handleAddTeacher : handleUpdateTeacher
-                    }
-                    onCancel={() => {
-                        setShowAddModal(false);
-                        setShowEditModal(false);
-                        resetForm();
-                    }}
-                    isAdd={showAddModal}
-                />
-            </Modal>
+                <div className="form">
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Matricule *</label>
+                            <input
+                                value={form.matricule}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        matricule: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Nom *</label>
+                            <input
+                                value={form.name}
+                                onChange={(e) =>
+                                    setForm({ ...form, name: e.target.value })
+                                }
+                            />
+                        </div>
+                    </div>
 
-            {/* Import Modal */}
-            <Modal
-                isOpen={showImportModal}
-                onClose={() => {
-                    setShowImportModal(false);
-                    setImportFile(null);
-                }}
-                title="Importer des Enseignants"
-            >
-                <div className="import-container">
-                    <div className="form-group">
-                        <label>Sélectionner un fichier CSV *</label>
-                        <input
-                            type="file"
-                            accept=".csv"
-                            onChange={(e) => setImportFile(e.target.files[0])}
-                            disabled={importing}
-                        />
-                        {importFile && (
-                            <p>Fichier sélectionné: {importFile.name}</p>
-                        )}
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Email *</label>
+                            <input
+                                type="email"
+                                value={form.email}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        email: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Mot de passe *</label>
+                            <input
+                                type="password"
+                                value={form.password}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        password: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Spécialité *</label>
+                            <input
+                                value={form.specialite}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        specialite: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Année Scolaire</label>
+                            <input
+                                type="number"
+                                value={form.annee_scolaire}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        annee_scolaire: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
                     </div>
 
                     <div className="form-actions">
                         <button
                             className="btn-secondary"
-                            onClick={() => {
-                                setShowImportModal(false);
-                                setImportFile(null);
-                            }}
-                            disabled={importing}
+                            onClick={() => setShowAddModal(false)}
                         >
                             Annuler
                         </button>
-                        <button
-                            className="btn-primary"
-                            onClick={handleImport}
-                            disabled={!importFile || importing}
-                        >
-                            {importing ? "Importation..." : "Importer"}
+                        <button className="btn-primary" onClick={handleAdd}>
+                            Ajouter
                         </button>
                     </div>
                 </div>
             </Modal>
+
+            {/* EDIT MODAL */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                title="Modifier un Enseignant"
+                size="lg"
+            >
+                <div className="form">
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Matricule *</label>
+                            <input
+                                value={form.matricule}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        matricule: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Nom *</label>
+                            <input
+                                value={form.name}
+                                onChange={(e) =>
+                                    setForm({ ...form, name: e.target.value })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Email *</label>
+                            <input
+                                value={form.email}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        email: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Mot de passe</label>
+                            <input
+                                type="password"
+                                value={form.password}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        password: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Spécialité *</label>
+                            <input
+                                value={form.specialite}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        specialite: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Année Scolaire</label>
+                            <input
+                                type="number"
+                                value={form.annee_scolaire}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        annee_scolaire: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-actions">
+                        <button
+                            className="btn-secondary"
+                            onClick={() => setShowEditModal(false)}
+                        >
+                            Annuler
+                        </button>
+                        <button className="btn-primary" onClick={handleUpdate}>
+                            Modifier
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* IMPORT MODAL */}
+            <Modal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                title="Importer CSV"
+            >
+                <button onClick={downloadTemplate}>
+                    📥 Télécharger modèle
+                </button>
+                <input type="file" accept=".csv" onChange={handleFileChange} />
+                <button
+                    disabled={!importFile || importing}
+                    onClick={handleImport}
+                >
+                    {importing ? "Import..." : "Importer"}
+                </button>
+            </Modal>
         </div>
     );
 };
-
-// Teacher Form
-const TeacherForm = ({
-    newTeacher,
-    setNewTeacher,
-    onSubmit,
-    onCancel,
-    isAdd,
-}) => (
-    <div className="form">
-        <div className="form-row">
-            <div className="form-group">
-                <label>Matricule *</label>
-                <input
-                    type="text"
-                    value={newTeacher.matricule}
-                    onChange={(e) =>
-                        setNewTeacher({
-                            ...newTeacher,
-                            matricule: e.target.value,
-                        })
-                    }
-                />
-            </div>
-            <div className="form-group">
-                <label>Prénom *</label>
-                <input
-                    type="text"
-                    value={newTeacher.firstName}
-                    onChange={(e) =>
-                        setNewTeacher({
-                            ...newTeacher,
-                            firstName: e.target.value,
-                        })
-                    }
-                />
-            </div>
-            <div className="form-group">
-                <label>Nom *</label>
-                <input
-                    type="text"
-                    value={newTeacher.lastName}
-                    onChange={(e) =>
-                        setNewTeacher({
-                            ...newTeacher,
-                            lastName: e.target.value,
-                        })
-                    }
-                />
-            </div>
-        </div>
-
-        <div className="form-group">
-            <label>Email *</label>
-            <input
-                type="email"
-                value={newTeacher.email}
-                onChange={(e) =>
-                    setNewTeacher({ ...newTeacher, email: e.target.value })
-                }
-            />
-        </div>
-
-        <div className="form-group">
-            <label>Password {isAdd ? "*" : "(laisser vide si inchangé)"}</label>
-            <input
-                type="password"
-                value={newTeacher.password}
-                onChange={(e) =>
-                    setNewTeacher({ ...newTeacher, password: e.target.value })
-                }
-            />
-        </div>
-
-        <div className="form-row">
-            <div className="form-group">
-                <label>Spécialité</label>
-                <input
-                    type="text"
-                    value={newTeacher.specialite}
-                    onChange={(e) =>
-                        setNewTeacher({
-                            ...newTeacher,
-                            specialite: e.target.value,
-                        })
-                    }
-                />
-            </div>
-            <div className="form-group">
-                <label>Niveau</label>
-                <input
-                    type="text"
-                    value={newTeacher.niveau}
-                    onChange={(e) =>
-                        setNewTeacher({ ...newTeacher, niveau: e.target.value })
-                    }
-                />
-            </div>
-        </div>
-
-        <div className="form-row">
-            <div className="form-group">
-                <label>Groupe</label>
-                <input
-                    type="text"
-                    value={newTeacher.groupe}
-                    onChange={(e) =>
-                        setNewTeacher({ ...newTeacher, groupe: e.target.value })
-                    }
-                />
-            </div>
-            <div className="form-group">
-                <label>Année Scolaire</label>
-                <input
-                    type="text"
-                    value={newTeacher.annee_scolaire}
-                    onChange={(e) =>
-                        setNewTeacher({
-                            ...newTeacher,
-                            annee_scolaire: e.target.value,
-                        })
-                    }
-                />
-            </div>
-        </div>
-
-        <div className="form-group">
-            <label>Statut</label>
-            <select
-                value={newTeacher.status}
-                onChange={(e) =>
-                    setNewTeacher({ ...newTeacher, status: e.target.value })
-                }
-            >
-                <option value="Actif">Actif</option>
-                <option value="Inactif">Inactif</option>
-            </select>
-        </div>
-
-        <div className="form-actions">
-            <button className="btn-secondary" onClick={onCancel}>
-                Annuler
-            </button>
-            <button className="btn-primary" onClick={onSubmit}>
-                Enregistrer
-            </button>
-        </div>
-    </div>
-);
 
 export default TeacherManagement;

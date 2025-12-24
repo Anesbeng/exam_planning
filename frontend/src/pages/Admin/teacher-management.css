@@ -1,0 +1,209 @@
+/* ================= ROOT ================= */
+.student-management {
+    padding: 25px;
+    background: #f4f6f9;
+    min-height: 100vh;
+    font-family: "Inter", system-ui, sans-serif;
+}
+
+/* ================= HEADER ================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.header-actions input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    min-width: 220px;
+    outline: none;
+}
+
+.header-actions button {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    background: #e5e7eb;
+}
+
+.header-actions button:hover {
+    opacity: 0.9;
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary {
+    background: #2563eb;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.btn-edit {
+    background: #facc15;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
+}
+
+/* ================= TABLE ================= */
+.table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 14px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.data-table th {
+    background: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+}
+
+.data-table tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table tr:hover {
+    background: #f3f4f6;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.actions button {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+/* ================= FORM ================= */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #2563eb;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ================= IMPORT ================= */
+.import-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.import-info {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.import-info ul {
+    padding-left: 18px;
+    margin: 8px 0;
+}
+
+.file-selected {
+    font-size: 13px;
+    color: #2563eb;
+}
+
+/* ================= LOADING ================= */
+.loading {
+    text-align: center;
+    padding: 30px;
+    color: #6b7280;
+    font-size: 16px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .header-actions input {
+        width: 100%;
+    }
+}
