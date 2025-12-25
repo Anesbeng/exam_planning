@@ -94,6 +94,8 @@ const ExamManagement = () => {
             });
 
             fetchExams();
+            // notify other tabs (teachers) that exams changed
+            localStorage.setItem('examUpdate', Date.now().toString());
             alert("Examen ajouté avec succès!");
         } catch (err) {
             console.error("Create error", err);
@@ -138,6 +140,8 @@ const ExamManagement = () => {
             setShowEditExamModal(false);
             setSelectedExam(null);
             fetchExams();
+            // notify other tabs (teachers) that exams changed
+            localStorage.setItem('examUpdate', Date.now().toString());
             alert("Examen modifié avec succès!");
         } catch (err) {
             console.error("Update error", err);
@@ -157,6 +161,8 @@ const ExamManagement = () => {
             setShowDeleteConfirmModal(false);
             setSelectedExam(null);
             fetchExams();
+            // notify other tabs (teachers) that exams changed
+            localStorage.setItem('examUpdate', Date.now().toString());
             alert("Examen supprimé avec succès!");
         } catch (err) {
             console.error("Delete error", err);

@@ -12,6 +12,7 @@ import StudentManagement from "./pages/Admin/StudentManagement";
 import ModuleManagement from "./pages/Admin/ModuleManagement";
 import RoomManagement from "./pages/Admin/RoomManagement";
 import ExamManagement from "./pages/Admin/ExamManagement";
+import ClaimsManagement from "./pages/Admin/ClaimsManagement";
 
 // Other dashboards
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -115,6 +116,14 @@ function App() {
                     element={
                         <AdminLayout>
                             <ExamManagement />
+                        </AdminLayout>
+                    }
+                />
+                <Route
+                    path="/claims"
+                    element={
+                        <AdminLayout>
+                            <ClaimsManagement />
                         </AdminLayout>
                     }
                 />

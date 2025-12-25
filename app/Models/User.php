@@ -34,4 +34,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+     // ✅ THIS IS IMPORTANT - Tell Laravel to use 'matricule' for authentication
+    public function getAuthIdentifierName()
+    {
+        return 'matricule';
+    }
 }

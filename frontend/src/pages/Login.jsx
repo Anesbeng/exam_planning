@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios"; // ← Add this import (adjust path if needed)
 
 export default function Login() {
     const navigate = useNavigate();
@@ -14,23 +15,13 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await fetch(
-                "http://localhost/exam_planning/public/api/login",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({ matricule, password }),
-                }
-            );
+            // Use api instead of fetch
+            const response = await api.post("/Login", {
+                matricule,
+                password
+            });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                setError(data.message || "Incorrect login");
-                setLoading(false);
-                return;
-            }
+            const data = response.data;
 
             localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -49,7 +40,7 @@ export default function Login() {
                     setLoading(false);
             }
         } catch (err) {
-            setError("Something went wrong. Try again.");
+            setError(err.response?.data?.message || "Something went wrong. Try again.");
             setLoading(false);
         }
     };

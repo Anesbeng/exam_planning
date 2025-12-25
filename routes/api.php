@@ -14,8 +14,10 @@ use App\Http\Controllers\SalleController;
 use App\Http\Controllers\ImportSallesController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\StudentExamController;
+use App\Http\Controllers\TeacherExamController;
+use App\Http\Controllers\ClaimController;
 
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/Login', [LoginController::class, 'login']);
 
 // GET route just to test if API is working
 Route::get('/login', function() {
@@ -48,3 +50,8 @@ Route::resource('teachers', TeacherController::class);
 
 
 Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
+Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
+
+
+// routes/api.php
+Route::apiResource('claims', ClaimController::class);
