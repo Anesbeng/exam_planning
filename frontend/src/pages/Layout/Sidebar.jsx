@@ -14,6 +14,7 @@ const Sidebar = ({ isOpen }) => {
         { path: "/rooms", label: "Salles", icon: "🏫" },
         { path: "/exams", label: "Examens", icon: "📝" },
         { path: "/users", label: "Utilisateurs", icon: "👥" },
+        { path: "/claims", label: "Réclamations", icon: "📋" },
     ];
 
     return (
