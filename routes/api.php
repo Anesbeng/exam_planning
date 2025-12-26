@@ -14,6 +14,11 @@ use App\Http\Controllers\SalleController;
 use App\Http\Controllers\ImportSallesController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\StudentExamController;
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\ResetPasswordController;
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
+Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
 Route::post('/login', [LoginController::class, 'login']);
 
