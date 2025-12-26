@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Modal from "./UI/Modal";
+import logoutIcon from "./logout.png";
+import uniLogo from "./logouniversite.jpg";
 
 export default function EspaceEnseignants() {
     const navigate = useNavigate();
@@ -113,9 +115,7 @@ export default function EspaceEnseignants() {
                                 <th className="border border-[#3A5377] px-4 py-3">
                                     Horaire
                                 </th>
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    Nombre d'étudiants
-                                </th>
+                                
                             </tr>
                         </thead>
                         <tbody>
@@ -136,9 +136,7 @@ export default function EspaceEnseignants() {
                                     <td className="border border-[#3A5377] px-4 py-3">
                                         {exam.start_time} - {exam.end_time}
                                     </td>
-                                    <td className="border border-[#3A5377] px-4 py-3">
-                                        {exam.student_count || "-"}
-                                    </td>
+                                    
                                 </tr>
                             ))}
                         </tbody>
@@ -150,7 +148,7 @@ export default function EspaceEnseignants() {
 
     const handleLogout = () => {
         localStorage.removeItem("user");
-        navigate("/Login");
+        navigate("/");
     };
 
     // ===== Claims: submit from teacher =====
@@ -224,7 +222,7 @@ export default function EspaceEnseignants() {
         <div className="flex flex-col min-h-screen bg-[#E6EEF7]">
             <div className="flex-grow relative">
                 <img
-                    src="universite-abou-bekr-belkaid-tlemcen-logo-algeria-removebg-preview (1).png"
+                    src={uniLogo}
                     alt="UABT Logo"
                     className="absolute top-4 left-4 w-14 h-14 object-contain"
                 />
@@ -238,8 +236,8 @@ export default function EspaceEnseignants() {
                     onClick={handleLogout}
                 >
                     <img
-                        src="user-logout.png"
-                        alt="user-logout"
+                        src={logoutIcon}
+                        alt="logout"
                         className="w-6 h-6 object-contain"
                     />
                 </div>
@@ -289,22 +287,9 @@ export default function EspaceEnseignants() {
                                         : "bg-white border-2 border-[#3A5377] text-[#0B2844] hover:bg-gray-50"
                                 }`}
                             >
-                                Mes Examens 
+                                Mes plannings
                             </button>
-                            <button
-                                onClick={() => {
-                                    setActiveView("surveillance");
-                                    setActiveTabS1("");
-                                    setActiveTabS2("");
-                                }}
-                                className={`px-6 py-3 rounded-lg font-montserrat transition-colors ${
-                                    activeView === "surveillance"
-                                        ? "bg-[#3A5377] text-white font-semibold"
-                                        : "bg-white border-2 border-[#3A5377] text-[#0B2844] hover:bg-gray-50"
-                                }`}
-                            >
-                                Planning de Surveillance
-                            </button>
+                            
                         </div>
 
                         {/* Semester Tabs - Only show when a view is active */}
@@ -360,57 +345,7 @@ export default function EspaceEnseignants() {
                             </>
                         )}
 
-                        {activeView === "surveillance" && (
-                            <>
-                                <div className="flex items-center space-x-4 mb-2">
-                                    <p className="text-[#0B2844] font-regular font-montserrat w-12">
-                                        S1
-                                    </p>
-                                    <div className="flex space-x-3">
-                                        {["CC", "EXAM", "RATT"].map((tab) => (
-                                            <button
-                                                key={tab}
-                                                onClick={() => {
-                                                    setActiveTabS1(tab);
-                                                    setActiveTabS2("");
-                                                }}
-                                                className={`text-[#0B2844] font-montserrat hover:underline ${
-                                                    activeTabS1 === tab
-                                                        ? "underline font-semibold"
-                                                        : ""
-                                                }`}
-                                            >
-                                                {tab}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center space-x-4 mb-2">
-                                    <p className="text-[#0B2844] font-regular font-montserrat w-12">
-                                        S2
-                                    </p>
-                                    <div className="flex space-x-3">
-                                        {["CC", "EXAM", "RATT"].map((tab) => (
-                                            <button
-                                                key={tab}
-                                                onClick={() => {
-                                                    setActiveTabS2(tab);
-                                                    setActiveTabS1("");
-                                                }}
-                                                className={`text-[#0B2844] font-montserrat hover:underline ${
-                                                    activeTabS2 === tab
-                                                        ? "underline font-semibold"
-                                                        : ""
-                                                }`}
-                                            >
-                                                {tab}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                        
                     </div>
                 </div>
 
@@ -579,100 +514,7 @@ export default function EspaceEnseignants() {
                     </>
                 )}
 
-                {/* SURVEILLANCE VIEW */}
-                {activeView === "surveillance" && (
-                    <>
-                        {activeTabS1 === "CC" && (
-                            <div className="flex flex-col items-center justify-center mt-12">
-                                <ExamTable
-                                    title="PLANNING S1 - SURVEILLANCE CONTRÔLE CONTINU"
-                                    examList={filterBySemester(surveillance, "1").filter(s => s.type === "CC")}
-                                />
-                                <button
-                                    onClick={() => setActiveTabS1("")}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        )}
-
-                        {activeTabS1 === "EXAM" && (
-                            <div className="flex flex-col items-center justify-center mt-12">
-                                <ExamTable
-                                    title="PLANNING S1 - SURVEILLANCE EXAMENS"
-                                    examList={filterBySemester(surveillance, "1").filter(s => s.type === "EXAM")}
-                                />
-                                <button
-                                    onClick={() => setActiveTabS1("")}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        )}
-
-                        {activeTabS1 === "RATT" && (
-                            <div className="flex flex-col items-center justify-center mt-12">
-                                <ExamTable
-                                    title="PLANNING S1 - SURVEILLANCE RATTRAPAGES"
-                                    examList={filterBySemester(surveillance, "1").filter(s => s.type === "RATT")}
-                                />
-                                <button
-                                    onClick={() => setActiveTabS1("")}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        )}
-
-                        {activeTabS2 === "CC" && (
-                            <div className="flex flex-col items-center justify-center mt-12">
-                                <ExamTable
-                                    title="PLANNING S2 - SURVEILLANCE CONTRÔLE CONTINU"
-                                    examList={filterBySemester(surveillance, "2").filter(s => s.type === "CC")}
-                                />
-                                <button
-                                    onClick={() => setActiveTabS2("")}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        )}
-
-                        {activeTabS2 === "EXAM" && (
-                            <div className="flex flex-col items-center justify-center mt-12">
-                                <ExamTable
-                                    title="PLANNING S2 - SURVEILLANCE EXAMENS"
-                                    examList={filterBySemester(surveillance, "2").filter(s => s.type === "EXAM")}
-                                />
-                                <button
-                                    onClick={() => setActiveTabS2("")}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        )}
-
-                        {activeTabS2 === "RATT" && (
-                            <div className="flex flex-col items-center justify-center mt-12">
-                                <ExamTable
-                                    title="PLANNING S2 - SURVEILLANCE RATTRAPAGES"
-                                    examList={filterBySemester(surveillance, "2").filter(s => s.type === "RATT")}
-                                />
-                                <button
-                                    onClick={() => setActiveTabS2("")}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
+                
             </div>
 
             {/* ================= Claim Modal ================= */}

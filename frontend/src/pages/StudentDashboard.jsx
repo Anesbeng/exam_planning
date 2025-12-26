@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios"; // ← Add this import (adjust path if needed)
+import logoutIcon from "./logout.png";
+import uniLogo from "./logouniversite.jpg";
 
 export default function EspaceEtudiants() {
     const navigate = useNavigate();
@@ -157,7 +159,7 @@ export default function EspaceEtudiants() {
         <div className="flex flex-col min-h-screen bg-[#E6EEF7]">
             <div className="flex-grow relative">
                 <img
-                    src="universite-abou-bekr-belkaid-tlemcen-logo-algeria-removebg-preview (1).png"
+                    src={uniLogo}
                     alt="UABT Logo"
                     className="absolute top-4 left-4 w-14 h-14 object-contain"
                 />
@@ -171,7 +173,7 @@ export default function EspaceEtudiants() {
                     onClick={handleLogout}
                 >
                     <img
-                        src="user-logout.png"
+                        src={logoutIcon}
                         alt="user-logout"
                         className="w-6 h-6 object-contain"
                     />

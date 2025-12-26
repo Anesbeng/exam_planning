@@ -1,0 +1,42 @@
+[
+    {
+        "id": 1,
+        "name": "N111",
+        "capacity": "50",
+        "location": "dep",
+        "created_at": "2025-12-24T20:15:33.000000Z",
+        "updated_at": "2025-12-24T20:15:33.000000Z"
+    },
+    {
+        "id": 2,
+        "name": "S201",
+        "capacity": "40",
+        "location": "Sud",
+        "created_at": "2025-12-26T13:34:23.000000Z",
+        "updated_at": "2025-12-26T13:34:23.000000Z"
+    },
+    {
+        "id": 3,
+        "name": "N001",
+        "capacity": "50",
+        "location": "Nord",
+        "created_at": "2025-12-26T14:30:47.000000Z",
+        "updated_at": "2025-12-26T14:30:47.000000Z"
+    },
+    {
+        "id": 4,
+        "name": "N002",
+        "capacity": "50",
+        "location": "Nord",
+        "created_at": "2025-12-26T14:31:04.000000Z",
+        "updated_at": "2025-12-26T14:31:04.000000Z"
+    },
+    {
+        "id": 6,
+        "name": "N444",
+        "capacity": "40",
+        "location": "Nord",
+        "created_at": "2025-12-26T16:01:00.000000Z",
+        "updated_at": "2025-12-26T16:01:00.000000Z"
+    }
+]

@@ -44,6 +44,8 @@ Route::post('/modules/import', [ImportmodulesController::class, 'import']);
 
 Route::resource('salles', SalleController::class);
 
+// Return available rooms for a given date/time (optional: exclude_exam_id)
+Route::get('/salles/available', [SalleController::class, 'available']);
 
 Route::post('/salles/import', [ImportSallesController::class, 'import']);
 Route::resource('teachers', TeacherController::class);

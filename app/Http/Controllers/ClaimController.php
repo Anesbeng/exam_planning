@@ -13,7 +13,8 @@ class ClaimController extends Controller
     public function create($exam, $type)
     {
         $exam = Exam::findOrFail($exam);
-        return view('admin.claims.create', compact('exam', 'type'));
+        // For API clients, return JSON instead of rendering a Blade view
+        return response()->json(['exam' => $exam, 'type' => $type]);
     }
 
     // Store the claim (supports JSON requests from SPA)
@@ -61,11 +62,8 @@ class ClaimController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        if ($request->wantsJson()) {
-            return response()->json(['claims' => $claims]);
-        }
-        
-        return view('admin.claims.index', compact('claims'));
+        // Always return JSON for claims in this controller
+        return response()->json(['claims' => $claims]);
     }
 
     // Admin: Update claim (used by API to change status or add admin notes)

@@ -10,6 +10,16 @@ const ExamManagement = () => {
     const [exams, setExams] = useState([]);
     const [selectedExam, setSelectedExam] = useState(null);
 
+    // available rooms for add / edit forms
+    const [availableRoomsNew, setAvailableRoomsNew] = useState([]);
+    const [availableRoomsEdit, setAvailableRoomsEdit] = useState([]);
+
+    // list of teachers for select
+    const [teachers, setTeachers] = useState([]);
+
+    // list of modules for select
+    const [modules, setModules] = useState([]);
+
     const [newExam, setNewExam] = useState({
         type: "examen",
         module: "",
@@ -60,9 +70,118 @@ const ExamManagement = () => {
         }
     };
 
+    /* ================= AVAILABLE ROOMS ================= */
+    const fetchAllRooms = async () => {
+        try {
+            const res = await api.get('/salles');
+            return res.data.salles || [];
+        } catch (e) {
+            console.error('Fetch all rooms error:', e);
+            return [];
+        }
+    };
+
+    const fetchAvailableRoomsForNew = async () => {
+        try {
+            const res = await api.get("/salles/available", {
+                params: {
+                    date: newExam.date,
+                    start_time: newExam.startTime,
+                    end_time: newExam.endTime,
+                },
+            });
+            setAvailableRoomsNew(res.data.salles || []);
+        } catch (err) {
+            console.error("Fetch available rooms (new) error:", err);
+            // fallback to fetching all rooms in case the available endpoint isn't reachable
+            const all = await fetchAllRooms();
+            setAvailableRoomsNew(all);
+        }
+    };
+
+    useEffect(() => {
+        // fetch available rooms when new exam date/time changes
+        fetchAvailableRoomsForNew();
+        // also refresh teachers & modules when preparing to add an exam
+        if (showAddExamModal) {
+            fetchTeachers();
+            fetchModules();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [newExam.date, newExam.startTime, newExam.endTime, showAddExamModal]);
+
+    // fetch teachers on mount and when add/edit modals open
+    const fetchTeachers = async () => {
+        try {
+            const res = await api.get('/teachers');
+            setTeachers(res.data.teachers || []);
+        } catch (err) {
+            console.error('Fetch teachers error:', err);
+            setTeachers([]);
+        }
+    };
+
+    // fetch modules
+    const fetchModules = async () => {
+        try {
+            const res = await api.get('/modules');
+            setModules(res.data.modules || []);
+        } catch (err) {
+            console.error('Fetch modules error:', err);
+            setModules([]);
+        }
+    };
+
+    useEffect(() => {
+        // initial fetch
+        fetchTeachers();
+        fetchModules();
+    }, []);
+
+
+    const fetchAvailableRoomsForEdit = async () => {
+        try {
+            const res = await api.get("/salles/available", {
+                params: {
+                    date: editExam.date,
+                    start_time: editExam.startTime,
+                    end_time: editExam.endTime,
+                    exclude_exam_id: selectedExam ? selectedExam.id : undefined,
+                },
+            });
+            setAvailableRoomsEdit(res.data.salles || []);
+        } catch (err) {
+            console.error("Fetch available rooms (edit) error:", err);
+            // fallback to fetching all rooms in case the available endpoint isn't reachable
+            const all = await fetchAllRooms();
+            setAvailableRoomsEdit(all);
+        }
+    };
+
+    useEffect(() => {
+        // fetch available rooms when edit exam date/time or selected exam change
+        if (selectedExam) fetchAvailableRoomsForEdit();
+        // when edit modal opens, also refresh teachers and modules
+        if (showEditExamModal) {
+            fetchTeachers();
+            fetchModules();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editExam.date, editExam.startTime, editExam.endTime, selectedExam, showEditExamModal]);
+
     /* ================= ADD EXAM ================= */
     const handleAddExam = async () => {
         try {
+            if (!newExam.module) {
+                alert("Veuillez sélectionner un module pour cet examen.");
+                return;
+            }
+
+            if (!newExam.room) {
+                alert("Veuillez sélectionner une salle disponible pour cet examen.");
+                return;
+            }
+
             await api.post("/exams", {
                 type: newExam.type,
                 module: newExam.module,
@@ -99,7 +218,8 @@ const ExamManagement = () => {
             alert("Examen ajouté avec succès!");
         } catch (err) {
             console.error("Create error", err);
-            alert("Erreur lors de la création de l'examen");
+            const message = err?.response?.data?.message || "Erreur lors de la création de l'examen";
+            alert(message);
         }
     };
 
@@ -123,6 +243,16 @@ const ExamManagement = () => {
 
     const handleUpdateExam = async () => {
         try {
+            if (!editExam.module) {
+                alert("Veuillez sélectionner un module pour cet examen.");
+                return;
+            }
+
+            if (!editExam.room) {
+                alert("Veuillez sélectionner une salle disponible pour cet examen.");
+                return;
+            }
+
             await api.put(`/exams/${selectedExam.id}`, {
                 type: editExam.type,
                 module: editExam.module,
@@ -145,7 +275,8 @@ const ExamManagement = () => {
             alert("Examen modifié avec succès!");
         } catch (err) {
             console.error("Update error", err);
-            alert("Erreur lors de la modification de l'examen");
+            const message = err?.response?.data?.message || "Erreur lors de la modification de l'examen";
+            alert(message);
         }
     };
 
@@ -222,6 +353,9 @@ const ExamManagement = () => {
                 <ExamForm
                     exam={newExam}
                     setExam={setNewExam}
+                    availableRooms={availableRoomsNew}
+                    availableTeachers={teachers}
+                    availableModules={modules}
                     onSubmit={handleAddExam}
                     onCancel={() => {
                         setShowAddExamModal(false);
@@ -254,6 +388,9 @@ const ExamManagement = () => {
                 <ExamForm
                     exam={editExam}
                     setExam={setEditExam}
+                    availableRooms={availableRoomsEdit}
+                    availableTeachers={teachers}
+                    availableModules={modules}
                     onSubmit={handleUpdateExam}
                     onCancel={() => {
                         setShowEditExamModal(false);
@@ -311,7 +448,7 @@ const ExamManagement = () => {
 };
 
 /* ================= EXAM FORM (REUSABLE) ================= */
-const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel }) => (
+const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRooms, availableTeachers, availableModules }) => (
     <div className="add-exam-form">
         <div className="form-row">
             <div className="form-group">
@@ -328,8 +465,7 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel }) => (
 
             <div className="form-group">
                 <label>Module</label>
-                <input
-                    type="text"
+                <select
                     value={exam.module}
                     onChange={(e) =>
                         setExam({
@@ -337,16 +473,25 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel }) => (
                             module: e.target.value,
                         })
                     }
-                    placeholder="Entrez le nom du module"
-                />
+                >
+                    <option value="">-- Sélectionner un module --</option>
+                    {availableModules && availableModules.length > 0 ? (
+                        availableModules.map((m) => (
+                            <option key={m.id} value={m.name}>
+                                {m.name} {m.code ? `(${m.code})` : ''}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="">Aucun module disponible</option>
+                    )}
+                </select>
             </div>
         </div>
 
         <div className="form-row">
             <div className="form-group">
                 <label>Enseignant</label>
-                <input
-                    type="text"
+                <select
                     value={exam.teacher}
                     onChange={(e) =>
                         setExam({
@@ -354,14 +499,23 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel }) => (
                             teacher: e.target.value,
                         })
                     }
-                    placeholder="Nom de l'enseignant"
-                />
+                >
+                    <option value="">-- Sélectionner un enseignant --</option>
+                    {availableTeachers && availableTeachers.length > 0 ? (
+                        availableTeachers.map((t) => (
+                            <option key={t.id} value={t.name}>
+                                {t.name} {t.matricule ? `(${t.matricule})` : t.email}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="">Aucun enseignant disponible</option>
+                    )}
+                </select>
             </div>
 
             <div className="form-group">
                 <label>Salle</label>
-                <input
-                    type="text"
+                <select
                     value={exam.room}
                     onChange={(e) =>
                         setExam({
@@ -369,8 +523,18 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel }) => (
                             room: e.target.value,
                         })
                     }
-                    placeholder="Numéro de salle"
-                />
+                >
+                    <option value="">-- Sélectionner une salle --</option>
+                    {availableRooms && availableRooms.length > 0 ? (
+                        availableRooms.map((r) => (
+                            <option key={r.id} value={r.name}>
+                                {r.name} {r.capacity ? `(${r.capacity})` : ''}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="">Aucune salle disponible</option>
+                    )}
+                </select>
             </div>
         </div>
 
