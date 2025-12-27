@@ -12,7 +12,9 @@ import StudentManagement from "./pages/Admin/StudentManagement";
 import ModuleManagement from "./pages/Admin/ModuleManagement";
 import RoomManagement from "./pages/Admin/RoomManagement";
 import ExamManagement from "./pages/Admin/ExamManagement";
-import ClaimsManagement from "./pages/Admin/ClaimsManagement";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ClaimsManagement from "./pages/ClaimsManagement";
 
 // Other dashboards
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -63,6 +65,8 @@ function App() {
                         </AdminLayout>
                     }
                 />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route
                     path="/academic"
                     element={

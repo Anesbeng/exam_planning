@@ -32,51 +32,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('modules', ModuleController::class);
 });
 // Forgot Password Routes
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
-})->middleware('guest')->name('password.request');
-
-Route::post('/forgot-password', function (Illuminate\Http\Request $request) {
-    $request->validate(['email' => 'required|email']);
-
-    $status = Password::sendResetLink(
-        $request->only('email')
-    );
-
-    return $status === Password::RESET_LINK_SENT
-        ? back()->with(['status' => __($status)])
-        : back()->withErrors(['email' => __($status)]);
-})->middleware('guest')->name('password.email');
-
-Route::get('/reset-password/{token}', function (string $token) {
-    return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
-})->middleware('guest')->name('password.reset');
-
-Route::post('/reset-password', function (Illuminate\Http\Request $request) {
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|min:6|confirmed',
-    ]);
-
-$status = Password::reset(
-    $request->only('email', 'password', 'password_confirmation', 'token'),
-    function (\App\Models\User $user, string $password) {
-        $user->forceFill([
-            'password' => Hash::make($password)
-        ])->setRememberToken(Str::random(60));
-
-        $user->save();
-
-        event(new PasswordReset($user));
-    }
-);
-
-
-    return $status === Password::PASSWORD_RESET
-        ? redirect()->route('login')->with('status', __($status))
-        : back()->withErrors(['email' => [__($status)]]);
-})->middleware('guest')->name('password.update');
 
 Route::get('/logout', [LoginController::class, 'logout']);
 

@@ -126,7 +126,7 @@ export default function EspaceEtudiants() {
 
     const handleLogout = () => {
         localStorage.removeItem("user");
-        navigate("/Login");
+        navigate("/");
     };
 
     if (loading) {

@@ -14,8 +14,19 @@ use App\Http\Controllers\SalleController;
 use App\Http\Controllers\ImportSallesController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\StudentExamController;
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\TeacherExamController;
 use App\Http\Controllers\ClaimController;
+
+use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\LevelController;
+use App\Http\Controllers\SpecialtyController;
+use App\Http\Controllers\GroupController;
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
+Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
 Route::post('/Login', [LoginController::class, 'login']);
 
@@ -55,5 +66,18 @@ Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
 Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
 
 
-// routes/api.php
-Route::apiResource('claims', ClaimController::class);
+
+    Route::get('/claims', [ClaimController::class, 'index']);
+    Route::put('/claims/{id}', [ClaimController::class, 'update']);
+    Route::delete('/claims/{id}', [ClaimController::class, 'destroy']);
+
+Route::post('/claims', [ClaimController::class, 'store']);
+
+
+
+
+Route::apiResource('academic-years', AcademicYearController::class);
+Route::apiResource('semesters', SemesterController::class);
+Route::apiResource('levels', LevelController::class);
+Route::apiResource('specialties', SpecialtyController::class);
+Route::apiResource('groups', GroupController::class);

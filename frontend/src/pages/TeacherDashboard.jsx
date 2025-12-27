@@ -5,6 +5,7 @@ import Modal from "./UI/Modal";
 import logoutIcon from "./logout.png";
 import uniLogo from "./logouniversite.jpg";
 
+
 export default function EspaceEnseignants() {
     const navigate = useNavigate();
     const [activeView, setActiveView] = useState(""); // "exams" or "surveillance"
@@ -565,12 +566,16 @@ export default function EspaceEnseignants() {
                             className="btn-primary"
                             onClick={handleSubmitClaim}
                             disabled={claimSubmitting || !selectedExamForClaim}
+                          
                         >
+                            
                             {claimSubmitting ? "Envoi..." : "Envoyer"}
                         </button>
                     </div>
                 </div>
             </Modal>
+
+            
 
             <footer className="bg-white border-t border-[#768FA6] mt-auto">
                 <div className="px-8 py-8">
@@ -582,6 +587,7 @@ export default function EspaceEnseignants() {
                     </div>
                 </div>
             </footer>
+            
         </div>
     );
 }
