@@ -76,8 +76,8 @@ Route::post('/claims', [ClaimController::class, 'store']);
 
 
 
-Route::apiResource('academic-years', AcademicYearController::class);
-Route::apiResource('semesters', SemesterController::class);
-Route::apiResource('levels', LevelController::class);
-Route::apiResource('specialties', SpecialtyController::class);
-Route::apiResource('groups', GroupController::class);
+Route::Resource('academic-years', AcademicYearController::class);
+Route::Resource('semesters', SemesterController::class);
+Route::Resource('levels', LevelController::class);
+Route::Resource('specialties', SpecialtyController::class);
+Route::Resource('groups', GroupController::class);
