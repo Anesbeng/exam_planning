@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,4 +39,9 @@ public function sendPasswordResetNotification($token)
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+     // ✅ THIS IS IMPORTANT - Tell Laravel to use 'matricule' for authentication
+    public function getAuthIdentifierName()
+    {
+        return 'matricule';
+    }
 }

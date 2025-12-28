@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Salle;
+use App\Models\Exam;
 use Illuminate\Http\Request;
 
 class SalleController extends Controller
@@ -13,6 +14,41 @@ class SalleController extends Controller
     public function index()
     {
         $salles = Salle::all();
+        return response()->json([
+            'salles' => $salles
+        ]);
+    }
+
+    /**
+     * Return available rooms for a given date/time
+     * Query params: date (YYYY-MM-DD), start_time (HH:MM), end_time (HH:MM), exclude_exam_id (optional)
+     */
+    public function available(Request $request)
+    {
+        $date = $request->query('date');
+        $start = $request->query('start_time');
+        $end = $request->query('end_time');
+        $excludeExamId = $request->query('exclude_exam_id');
+
+        if (!$date || !$start || !$end) {
+            // if no date/time specified, just return all rooms
+            $salles = Salle::all();
+            return response()->json([
+                'salles' => $salles
+            ]);
+        }
+
+        $takenRooms = Exam::where('date', $date)
+            ->when($excludeExamId, function($q) use ($excludeExamId) {
+                $q->where('id', '!=', $excludeExamId);
+            })
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start)
+            ->pluck('room')
+            ->toArray();
+
+        $salles = Salle::whereNotIn('name', $takenRooms)->get();
+
         return response()->json([
             'salles' => $salles
         ]);

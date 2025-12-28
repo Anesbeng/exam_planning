@@ -1,12 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\User;
 
+use App\Models\User;
 use App\Models\Claim;
 use App\Models\Exam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ClaimController extends Controller
 {
@@ -26,12 +27,18 @@ class ClaimController extends Controller
             'exam_id' => 'required|exists:exams,id',
             'exam_type' => 'required|string',
             'message' => 'required|string|max:2000',
-            'teacher_matricule' => 'required'
+            'teacher_matricule' => 'required|string'
         ]);
 
         $teacher = User::where('matricule', $request->teacher_matricule)
             ->where('role', 'teacher')
-            ->firstOrFail();
+            ->first();
+
+        if (!$teacher) {
+            return response()->json([
+                'message' => 'Teacher not found with the provided matricule'
+            ], 404);
+        }
 
         $claim = Claim::create([
             'exam_id' => $request->exam_id,
@@ -44,21 +51,30 @@ class ClaimController extends Controller
 
         return response()->json([
             'message' => 'Claim created successfully',
-            'claim' => $claim
+            'claim' => $claim->load(['exam', 'teacher'])
         ], 201);
     }
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'status' => ['required', Rule::in(['pending', 'approved', 'rejected'])]
+        ]);
+
         $claim = Claim::findOrFail($id);
         $claim->update(['status' => $request->status]);
 
-        return response()->json(['message' => 'Claim updated']);
+        return response()->json([
+            'message' => 'Claim updated successfully',
+            'claim' => $claim
+        ]);
     }
 
     public function destroy($id)
     {
-        Claim::findOrFail($id)->delete();
-        return response()->json(['message' => 'Claim deleted']);
+        $claim = Claim::findOrFail($id);
+        $claim->delete();
+        
+        return response()->json(['message' => 'Claim deleted successfully']);
     }
 }

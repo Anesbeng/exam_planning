@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Modal from "./UI/Modal";
+import logoutIcon from "./logout.png";
+import uniLogo from "./logouniversite.jpg";
+
 
 export default function EspaceEnseignants() {
     const navigate = useNavigate();
@@ -23,6 +26,8 @@ export default function EspaceEnseignants() {
     const [claimReason, setClaimReason] = useState("");
     const [claimSubmitting, setClaimSubmitting] = useState(false);
 
+
+
     useEffect(() => {
         // Check if user is logged in
         const user = JSON.parse(localStorage.getItem("user"));
@@ -35,14 +40,14 @@ export default function EspaceEnseignants() {
 
         // Listen for cross-tab exam updates (set by Admin when exams change)
         const storageHandler = (e) => {
-            if (e.key === "examUpdate") {
+            if (e.key === 'examUpdate') {
                 fetchTeacherData(user.matricule);
             }
         };
-        window.addEventListener("storage", storageHandler);
+        window.addEventListener('storage', storageHandler);
 
         return () => {
-            window.removeEventListener("storage", storageHandler);
+            window.removeEventListener('storage', storageHandler);
         };
     }, [navigate]);
 
@@ -51,10 +56,8 @@ export default function EspaceEnseignants() {
             setLoading(true);
             setError(null);
 
-            const response = await api.get(
-                `/teacher/exams?matricule=${matricule}`
-            );
-
+            const response = await api.get(`/teacher/exams?matricule=${matricule}`);
+            
             const data = response.data;
             console.log("Fetched data:", data);
 
@@ -63,11 +66,7 @@ export default function EspaceEnseignants() {
             setRattrapage(data.rattrapage || []);
             setSurveillance(data.surveillance || []);
         } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                    err.message ||
-                    "Failed to fetch exam data"
-            );
+            setError(err.response?.data?.message || err.message || "Failed to fetch exam data");
             console.error("Error fetching exams:", err);
         } finally {
             setLoading(false);
@@ -117,6 +116,7 @@ export default function EspaceEnseignants() {
                                 <th className="border border-[#3A5377] px-4 py-3">
                                     Horaire
                                 </th>
+                                
                             </tr>
                         </thead>
                         <tbody>
@@ -132,13 +132,12 @@ export default function EspaceEnseignants() {
                                         {exam.room}
                                     </td>
                                     <td className="border border-[#3A5377] px-4 py-3">
-                                        {new Date(exam.date).toLocaleDateString(
-                                            "fr-FR"
-                                        )}
+                                        {new Date(exam.date).toLocaleDateString("fr-FR")}
                                     </td>
                                     <td className="border border-[#3A5377] px-4 py-3">
                                         {exam.start_time} - {exam.end_time}
                                     </td>
+                                    
                                 </tr>
                             ))}
                         </tbody>
@@ -168,15 +167,7 @@ export default function EspaceEnseignants() {
             setClaimSubmitting(true);
 
             // Map 'examen' -> 'exam' to match backend's accepted exam_type values
-            const typeMap = (t) => {
-                if (!t) return null;
-                t = t.toLowerCase();
-                if (t === "examen") return "exam";
-                if (t === "exam") return "exam";
-                if (t === "cc") return "cc";
-                if (t === "ratt" || t === "rattrapage") return "rattrapage";
-                return t;
-            };
+            const typeMap = (t) => (t === "examen" ? "exam" : t);
 
             await api.post("/claims", {
                 exam_id: selectedExamForClaim.id,
@@ -232,7 +223,7 @@ export default function EspaceEnseignants() {
         <div className="flex flex-col min-h-screen bg-[#E6EEF7]">
             <div className="flex-grow relative">
                 <img
-                    src="logouniversite.jpg"
+                    src={uniLogo}
                     alt="UABT Logo"
                     className="absolute top-4 left-4 w-14 h-14 object-contain"
                 />
@@ -246,7 +237,7 @@ export default function EspaceEnseignants() {
                     onClick={handleLogout}
                 >
                     <img
-                        src="logout.png"
+                        src={logoutIcon}
                         alt="logout"
                         className="w-6 h-6 object-contain"
                     />
@@ -299,6 +290,7 @@ export default function EspaceEnseignants() {
                             >
                                 Mes plannings
                             </button>
+                            
                         </div>
 
                         {/* Semester Tabs - Only show when a view is active */}
@@ -353,6 +345,8 @@ export default function EspaceEnseignants() {
                                 </div>
                             </>
                         )}
+
+                        
                     </div>
                 </div>
 
@@ -374,14 +368,9 @@ export default function EspaceEnseignants() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const list = filterBySemester(
-                                                cc,
-                                                "1"
-                                            );
+                                            const list = filterBySemester(cc, "1");
                                             setClaimCandidates(list);
-                                            setSelectedExamForClaim(
-                                                list[0] || null
-                                            );
+                                            setSelectedExamForClaim(list[0] || null);
                                             setClaimReason("");
                                             setShowClaimModal(true);
                                         }}
@@ -408,14 +397,9 @@ export default function EspaceEnseignants() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const list = filterBySemester(
-                                                exams,
-                                                "1"
-                                            );
+                                            const list = filterBySemester(exams, "1");
                                             setClaimCandidates(list);
-                                            setSelectedExamForClaim(
-                                                list[0] || null
-                                            );
+                                            setSelectedExamForClaim(list[0] || null);
                                             setClaimReason("");
                                             setShowClaimModal(true);
                                         }}
@@ -442,14 +426,9 @@ export default function EspaceEnseignants() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const list = filterBySemester(
-                                                rattrapage,
-                                                "1"
-                                            );
+                                            const list = filterBySemester(rattrapage, "1");
                                             setClaimCandidates(list);
-                                            setSelectedExamForClaim(
-                                                list[0] || null
-                                            );
+                                            setSelectedExamForClaim(list[0] || null);
                                             setClaimReason("");
                                             setShowClaimModal(true);
                                         }}
@@ -476,14 +455,9 @@ export default function EspaceEnseignants() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const list = filterBySemester(
-                                                cc,
-                                                "2"
-                                            );
+                                            const list = filterBySemester(cc, "2");
                                             setClaimCandidates(list);
-                                            setSelectedExamForClaim(
-                                                list[0] || null
-                                            );
+                                            setSelectedExamForClaim(list[0] || null);
                                             setClaimReason("");
                                             setShowClaimModal(true);
                                         }}
@@ -510,14 +484,9 @@ export default function EspaceEnseignants() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const list = filterBySemester(
-                                                exams,
-                                                "2"
-                                            );
+                                            const list = filterBySemester(exams, "2");
                                             setClaimCandidates(list);
-                                            setSelectedExamForClaim(
-                                                list[0] || null
-                                            );
+                                            setSelectedExamForClaim(list[0] || null);
                                             setClaimReason("");
                                             setShowClaimModal(true);
                                         }}
@@ -545,6 +514,8 @@ export default function EspaceEnseignants() {
                         )}
                     </>
                 )}
+
+                
             </div>
 
             {/* ================= Claim Modal ================= */}
@@ -554,16 +525,12 @@ export default function EspaceEnseignants() {
                 title="Signaler un examen"
             >
                 <div>
-                    <p className="font-semibold mb-2">
-                        Sélectionnez l'examen :
-                    </p>
+                    <p className="font-semibold mb-2">Sélectionnez l'examen :</p>
                     <select
                         value={selectedExamForClaim?.id || ""}
                         onChange={(e) => {
                             const id = Number(e.target.value);
-                            const ex =
-                                claimCandidates.find((c) => c.id === id) ||
-                                null;
+                            const ex = claimCandidates.find((c) => c.id === id) || null;
                             setSelectedExamForClaim(ex);
                         }}
                         className="w-full border p-2 mb-3"
@@ -573,10 +540,7 @@ export default function EspaceEnseignants() {
                         )}
                         {claimCandidates.map((exam) => (
                             <option key={exam.id} value={exam.id}>
-                                {exam.module} — {exam.niveau}/{exam.group} —{" "}
-                                {new Date(exam.date).toLocaleDateString(
-                                    "fr-FR"
-                                )}
+                                {exam.module} — {exam.niveau}/{exam.group} — {new Date(exam.date).toLocaleDateString("fr-FR")}
                             </option>
                         ))}
                     </select>
@@ -602,12 +566,16 @@ export default function EspaceEnseignants() {
                             className="btn-primary"
                             onClick={handleSubmitClaim}
                             disabled={claimSubmitting || !selectedExamForClaim}
+                          
                         >
+                            
                             {claimSubmitting ? "Envoi..." : "Envoyer"}
                         </button>
                     </div>
                 </div>
             </Modal>
+
+            
 
             <footer className="bg-white border-t border-[#768FA6] mt-auto">
                 <div className="px-8 py-8">
@@ -619,6 +587,7 @@ export default function EspaceEnseignants() {
                     </div>
                 </div>
             </footer>
+            
         </div>
     );
 }

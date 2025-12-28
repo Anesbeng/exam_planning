@@ -19,10 +19,16 @@ use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\TeacherExamController;
 use App\Http\Controllers\ClaimController;
 
+use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\LevelController;
+use App\Http\Controllers\SpecialtyController;
+use App\Http\Controllers\GroupController;
+
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
 Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/Login', [LoginController::class, 'login']);
 
 // GET route just to test if API is working
 Route::get('/login', function() {
@@ -49,6 +55,8 @@ Route::post('/modules/import', [ImportmodulesController::class, 'import']);
 
 Route::resource('salles', SalleController::class);
 
+// Return available rooms for a given date/time (optional: exclude_exam_id)
+Route::get('/salles/available', [SalleController::class, 'available']);
 
 Route::post('/salles/import', [ImportSallesController::class, 'import']);
 Route::resource('teachers', TeacherController::class);
@@ -64,3 +72,12 @@ Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
     Route::delete('/claims/{id}', [ClaimController::class, 'destroy']);
 
 Route::post('/claims', [ClaimController::class, 'store']);
+
+
+
+
+Route::apiResource('academic-years', AcademicYearController::class);
+Route::apiResource('semesters', SemesterController::class);
+Route::apiResource('levels', LevelController::class);
+Route::apiResource('specialties', SpecialtyController::class);
+Route::apiResource('groups', GroupController::class);

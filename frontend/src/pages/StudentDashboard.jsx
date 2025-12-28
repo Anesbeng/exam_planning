@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios"; // ← Add this import (adjust path if needed)
+import logoutIcon from "./logout.png";
+import uniLogo from "./logouniversite.jpg";
 
 export default function EspaceEtudiants() {
     const navigate = useNavigate();
@@ -27,25 +30,10 @@ export default function EspaceEtudiants() {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
-                `http://localhost/exam_planning/public/api/student/exams?matricule=${matricule}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                    },
-                }
-            );
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(
-                    errorData.message || "Failed to fetch exam data"
-                );
-            }
-
-            const data = await response.json();
+            // Use api instead of fetch
+            const response = await api.get(`/student/exams?matricule=${matricule}`);
+            
+            const data = response.data;
             console.log("Fetched data:", data); // Debug log
 
             setStudentData(data.student);
@@ -53,12 +41,14 @@ export default function EspaceEtudiants() {
             setCc(data.cc || []);
             setRattrapage(data.rattrapage || []);
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message || "Failed to fetch exam data");
             console.error("Error fetching exams:", err);
         } finally {
             setLoading(false);
         }
     };
+
+    // ... rest of the code stays the same
 
     const filterBySemester = (examList, semester) => {
         return examList.filter((exam) => exam.semester === semester);
@@ -136,7 +126,7 @@ export default function EspaceEtudiants() {
 
     const handleLogout = () => {
         localStorage.removeItem("user");
-        navigate("/Login");
+        navigate("/");
     };
 
     if (loading) {
@@ -169,7 +159,7 @@ export default function EspaceEtudiants() {
         <div className="flex flex-col min-h-screen bg-[#E6EEF7]">
             <div className="flex-grow relative">
                 <img
-                    src="universite-abou-bekr-belkaid-tlemcen-logo-algeria-removebg-preview (1).png"
+                    src={uniLogo}
                     alt="UABT Logo"
                     className="absolute top-4 left-4 w-14 h-14 object-contain"
                 />
@@ -183,7 +173,7 @@ export default function EspaceEtudiants() {
                     onClick={handleLogout}
                 >
                     <img
-                        src="user-logout.png"
+                        src={logoutIcon}
                         alt="user-logout"
                         className="w-6 h-6 object-contain"
                     />
@@ -368,7 +358,7 @@ export default function EspaceEtudiants() {
                 <div className="px-8 py-8">
                     <div className="text-center">
                         <p className="text-sm text-[#768FA6] font-montserrat">
-                            Copyright © 2014 Université Abou Bekr Belkaïd
+                            Copyright © 2026 Université Abou Bekr Belkaïd
                             Tlemcen. Tous droits réservés.
                         </p>
                     </div>
