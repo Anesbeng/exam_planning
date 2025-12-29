@@ -7,38 +7,37 @@ const ExamManagement = () => {
     const [showAddExamModal, setShowAddExamModal] = useState(false);
     const [showEditExamModal, setShowEditExamModal] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
     const [exams, setExams] = useState([]);
     const [selectedExam, setSelectedExam] = useState(null);
 
-    // available rooms for add / edit forms
     const [availableRoomsNew, setAvailableRoomsNew] = useState([]);
     const [availableRoomsEdit, setAvailableRoomsEdit] = useState([]);
 
-    // list of teachers for select
     const [teachers, setTeachers] = useState([]);
-
-    // list of modules for select
     const [modules, setModules] = useState([]);
+    const [levels, setLevels] = useState([]);
+    const [specialties, setSpecialties] = useState([]);
+    const [groups, setGroups] = useState([]);
 
-    const [newExam, setNewExam] = useState({
+    const emptyExam = {
         type: "examen",
         module: "",
         teacher: "", // This will be the teacher's name
         teacherMatricule: "", // ✅ NEW: Store matricule separately
         room: "",
+        specialite: "",
         niveau: "",
         group: "",
         date: "",
         startTime: "",
         endTime: "",
-        specialite: "informatique",
-    });
+    };
 
     const [editExam, setEditExam] = useState({
         type: "",
         module: "",
         teacher: "",
-        teacherMatricule: "", // ✅ NEW: Store matricule separately
         room: "",
         niveau: "",
         group: "",
@@ -48,9 +47,12 @@ const ExamManagement = () => {
         specialite: "",
     });
 
-    /* ================= FETCH EXAMS ================= */
+    /* ================= FETCH DATA ================= */
     useEffect(() => {
         fetchExams();
+        fetchTeachers();
+        fetchModules();
+        fetchAcademicData();
     }, []);
 
     const fetchExams = async () => {
@@ -95,13 +97,16 @@ const ExamManagement = () => {
             setAvailableRoomsNew(res.data.salles || []);
         } catch (err) {
             console.error("Fetch available rooms (new) error:", err);
+            // fallback to fetching all rooms in case the available endpoint isn't reachable
             const all = await fetchAllRooms();
             setAvailableRoomsNew(all);
         }
     };
 
     useEffect(() => {
+        // fetch available rooms when new exam date/time changes
         fetchAvailableRoomsForNew();
+        // also refresh teachers & modules when preparing to add an exam
         if (showAddExamModal) {
             fetchTeachers();
             fetchModules();
@@ -109,14 +114,10 @@ const ExamManagement = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [newExam.date, newExam.startTime, newExam.endTime, showAddExamModal]);
 
+    // fetch teachers on mount and when add/edit modals open
     const fetchTeachers = async () => {
-        try {
-            const res = await api.get('/teachers');
-            setTeachers(res.data.teachers || []);
-        } catch (err) {
-            console.error('Fetch teachers error:', err);
-            setTeachers([]);
-        }
+        const res = await api.get("/teachers");
+        setTeachers(res.data.teachers || []);
     };
 
     const fetchModules = async () => {
@@ -130,30 +131,35 @@ const ExamManagement = () => {
     };
 
     useEffect(() => {
+        // initial fetch
         fetchTeachers();
         fetchModules();
     }, []);
+
 
     const fetchAvailableRoomsForEdit = async () => {
         try {
             const res = await api.get("/salles/available", {
                 params: {
-                    date: editExam.date,
-                    start_time: editExam.startTime,
-                    end_time: editExam.endTime,
-                    exclude_exam_id: selectedExam ? selectedExam.id : undefined,
+                    date: exam.date,
+                    start_time: exam.startTime,
+                    end_time: exam.endTime,
+                    exclude_exam_id: excludeId,
                 },
             });
             setAvailableRoomsEdit(res.data.salles || []);
         } catch (err) {
             console.error("Fetch available rooms (edit) error:", err);
+            // fallback to fetching all rooms in case the available endpoint isn't reachable
             const all = await fetchAllRooms();
             setAvailableRoomsEdit(all);
         }
     };
 
     useEffect(() => {
+        // fetch available rooms when edit exam date/time or selected exam change
         if (selectedExam) fetchAvailableRoomsForEdit();
+        // when edit modal opens, also refresh teachers and modules
         if (showEditExamModal) {
             fetchTeachers();
             fetchModules();
@@ -161,7 +167,7 @@ const ExamManagement = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editExam.date, editExam.startTime, editExam.endTime, selectedExam, showEditExamModal]);
 
-    /* ================= ADD EXAM ================= */
+    /* ================= CRUD ================= */
     const handleAddExam = async () => {
         try {
             if (!newExam.module) {
@@ -174,11 +180,10 @@ const ExamManagement = () => {
                 return;
             }
 
-            // ✅ FIXED: Send teacher matricule instead of name
             await api.post("/exams", {
                 type: newExam.type,
                 module: newExam.module,
-                teacher: newExam.teacherMatricule, // ✅ Send matricule, not name
+                teacher: newExam.teacher,
                 room: newExam.room,
                 niveau: newExam.niveau,
                 group: newExam.group,
@@ -191,11 +196,11 @@ const ExamManagement = () => {
 
             setShowAddExamModal(false);
 
+            // Reset form
             setNewExam({
                 type: "examen",
                 module: "",
                 teacher: "",
-                teacherMatricule: "",
                 room: "",
                 niveau: "",
                 group: "",
@@ -206,6 +211,7 @@ const ExamManagement = () => {
             });
 
             fetchExams();
+            // notify other tabs (teachers) that exams changed
             localStorage.setItem('examUpdate', Date.now().toString());
             alert("Examen ajouté avec succès!");
         } catch (err) {
@@ -226,14 +232,12 @@ const ExamManagement = () => {
             type: exam.type,
             module: exam.module,
             teacher: exam.teacher || "",
-            teacherMatricule: teacher?.matricule || exam.teacher || "", // Try to get matricule
             room: exam.room,
             niveau: exam.niveau,
             group: exam.group,
             date: exam.date,
             startTime: exam.start_time,
             endTime: exam.end_time,
-            specialite: exam.specialite,
         });
         setShowEditExamModal(true);
     };
@@ -250,11 +254,10 @@ const ExamManagement = () => {
                 return;
             }
 
-            // ✅ FIXED: Send teacher matricule instead of name
             await api.put(`/exams/${selectedExam.id}`, {
                 type: editExam.type,
                 module: editExam.module,
-                teacher: editExam.teacherMatricule, // ✅ Send matricule, not name
+                teacher: editExam.teacher,
                 room: editExam.room,
                 niveau: editExam.niveau,
                 group: editExam.group,
@@ -268,6 +271,7 @@ const ExamManagement = () => {
             setShowEditExamModal(false);
             setSelectedExam(null);
             fetchExams();
+            // notify other tabs (teachers) that exams changed
             localStorage.setItem('examUpdate', Date.now().toString());
             alert("Examen modifié avec succès!");
         } catch (err) {
@@ -289,6 +293,7 @@ const ExamManagement = () => {
             setShowDeleteConfirmModal(false);
             setSelectedExam(null);
             fetchExams();
+            // notify other tabs (teachers) that exams changed
             localStorage.setItem('examUpdate', Date.now().toString());
             alert("Examen supprimé avec succès!");
         } catch (err) {
@@ -306,52 +311,55 @@ const ExamManagement = () => {
 
     return (
         <div className="exam-management">
-            <div className="page-header">
-                <h1>Planning des Examens</h1>
-                <button
-                    className="btn-primary"
-                    onClick={() => setShowAddExamModal(true)}
-                >
-                    + Ajouter un examen
-                </button>
-            </div>
+            <h1>Planning des Examens</h1>
 
-            {/* ================= EXAMENS ================= */}
+            <button onClick={() => setShowAddExamModal(true)}>
+                + Ajouter un examen
+            </button>
+
             <Section
                 title="Examens"
                 data={examTypes.examen}
                 onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
+                onDelete={(e) => {
+                    setSelectedExam(e);
+                    setShowDeleteConfirmModal(true);
+                }}
             />
-
-            {/* ================= CC ================= */}
             <Section
-                title="Contrôle Continu"
+                title="CC"
                 data={examTypes.cc}
                 onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
+                onDelete={(e) => {
+                    setSelectedExam(e);
+                    setShowDeleteConfirmModal(true);
+                }}
             />
-
-            {/* ================= RATTRAPAGE ================= */}
             <Section
                 title="Rattrapage"
                 data={examTypes.rattrapage}
                 onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
+                onDelete={(e) => {
+                    setSelectedExam(e);
+                    setShowDeleteConfirmModal(true);
+                }}
             />
 
-            {/* ================= ADD MODAL ================= */}
+            {/* ADD */}
             <Modal
                 isOpen={showAddExamModal}
                 onClose={() => setShowAddExamModal(false)}
-                title="Ajouter un examen"
+                title="Ajouter"
             >
                 <ExamForm
                     exam={newExam}
                     setExam={setNewExam}
-                    availableRooms={availableRoomsNew}
-                    availableTeachers={teachers}
-                    availableModules={modules}
+                    rooms={availableRoomsNew}
+                    teachers={teachers}
+                    modules={modules}
+                    levels={levels}
+                    specialties={specialties}
+                    groups={groups}
                     onSubmit={handleAddExam}
                     onCancel={() => {
                         setShowAddExamModal(false);
@@ -359,7 +367,6 @@ const ExamManagement = () => {
                             type: "examen",
                             module: "",
                             teacher: "",
-                            teacherMatricule: "",
                             room: "",
                             niveau: "",
                             group: "",
@@ -373,272 +380,225 @@ const ExamManagement = () => {
                 />
             </Modal>
 
-            {/* ================= EDIT MODAL ================= */}
+            {/* EDIT */}
             <Modal
                 isOpen={showEditExamModal}
-                onClose={() => {
-                    setShowEditExamModal(false);
-                    setSelectedExam(null);
-                }}
-                title="Modifier l'examen"
+                onClose={() => setShowEditExamModal(false)}
+                title="Modifier"
             >
                 <ExamForm
                     exam={editExam}
                     setExam={setEditExam}
-                    availableRooms={availableRoomsEdit}
-                    availableTeachers={teachers}
-                    availableModules={modules}
+                    rooms={availableRoomsEdit}
+                    teachers={teachers}
+                    modules={modules}
+                    levels={levels}
+                    specialties={specialties}
+                    groups={groups}
                     onSubmit={handleUpdateExam}
-                    onCancel={() => {
-                        setShowEditExamModal(false);
-                        setSelectedExam(null);
-                    }}
+                    onCancel={() => setShowEditExamModal(false)}
                     submitLabel="Modifier"
                 />
             </Modal>
 
-            {/* ================= DELETE CONFIRMATION MODAL ================= */}
+            {/* DELETE */}
             <Modal
                 isOpen={showDeleteConfirmModal}
-                onClose={() => {
-                    setShowDeleteConfirmModal(false);
-                    setSelectedExam(null);
-                }}
-                title="Confirmer la suppression"
+                onClose={() => setShowDeleteConfirmModal(false)}
+                title="Supprimer"
             >
-                <div className="delete-confirmation">
-                    <p>Êtes-vous sûr de vouloir supprimer cet examen ?</p>
-                    {selectedExam && (
-                        <div className="exam-details">
-                            <p>
-                                <strong>Module:</strong> {selectedExam.module}
-                            </p>
-                            <p>
-                                <strong>Date:</strong> {selectedExam.date}
-                            </p>
-                            <p>
-                                <strong>Salle:</strong> {selectedExam.room}
-                            </p>
-                        </div>
-                    )}
-                    <div className="form-actions">
-                        <button
-                            className="btn-secondary"
-                            onClick={() => {
-                                setShowDeleteConfirmModal(false);
-                                setSelectedExam(null);
-                            }}
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            className="btn-danger"
-                            onClick={handleDeleteExam}
-                        >
-                            Supprimer
-                        </button>
-                    </div>
-                </div>
+                <button onClick={handleDeleteExam}>Confirmer</button>
             </Modal>
         </div>
     );
 };
 
 /* ================= EXAM FORM (REUSABLE) ================= */
-const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRooms, availableTeachers, availableModules }) => {
-    
-    // ✅ FIXED: Handle teacher selection to store both name and matricule
-    const handleTeacherChange = (e) => {
-        const selectedMatricule = e.target.value;
-        const teacher = availableTeachers.find(t => t.matricule === selectedMatricule);
-        
-        setExam({
-            ...exam,
-            teacher: teacher ? teacher.name : "",
-            teacherMatricule: selectedMatricule
-        });
-    };
-
-    return (
-        <div className="add-exam-form">
-            <div className="form-row">
-                <div className="form-group">
-                    <label>Type</label>
-                    <select
-                        value={exam.type}
-                        onChange={(e) => setExam({ ...exam, type: e.target.value })}
-                    >
-                        <option value="examen">Examen</option>
-                        <option value="cc">Contrôle Continu</option>
-                        <option value="rattrapage">Rattrapage</option>
-                    </select>
-                </div>
-
-                <div className="form-group">
-                    <label>Module</label>
-                    <select
-                        value={exam.module}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                module: e.target.value,
-                            })
-                        }
-                    >
-                        <option value="">-- Sélectionner un module --</option>
-                        {availableModules && availableModules.length > 0 ? (
-                            availableModules.map((m) => (
-                                <option key={m.id} value={m.name}>
-                                    {m.name} {m.code ? `(${m.code})` : ''}
-                                </option>
-                            ))
-                        ) : (
-                            <option value="">Aucun module disponible</option>
-                        )}
-                    </select>
-                </div>
+const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRooms, availableTeachers, availableModules }) => (
+    <div className="add-exam-form">
+        <div className="form-row">
+            <div className="form-group">
+                <label>Type</label>
+                <select
+                    value={exam.type}
+                    onChange={(e) => setExam({ ...exam, type: e.target.value })}
+                >
+                    <option value="examen">Examen</option>
+                    <option value="cc">Contrôle Continu</option>
+                    <option value="rattrapage">Rattrapage</option>
+                </select>
             </div>
 
-            <div className="form-row">
-                <div className="form-group">
-                    <label>Enseignant</label>
-                    <select
-                        value={exam.teacherMatricule}
-                        onChange={handleTeacherChange}
-                    >
-                        <option value="">-- Sélectionner un enseignant --</option>
-                        {availableTeachers && availableTeachers.length > 0 ? (
-                            availableTeachers.map((t) => (
-                                <option key={t.id} value={t.matricule}>
-                                    {t.name} ({t.matricule})
-                                </option>
-                            ))
-                        ) : (
-                            <option value="">Aucun enseignant disponible</option>
-                        )}
-                    </select>
-                </div>
+            <div className="form-group">
+                <label>Module</label>
+                <select
+                    value={exam.module}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            module: e.target.value,
+                        })
+                    }
+                >
+                    <option value="">-- Sélectionner un module --</option>
+                    {availableModules && availableModules.length > 0 ? (
+                        availableModules.map((m) => (
+                            <option key={m.id} value={m.name}>
+                                {m.name} {m.code ? `(${m.code})` : ''}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="">Aucun module disponible</option>
+                    )}
+                </select>
+            </div>
+        </div>
 
-                <div className="form-group">
-                    <label>Salle</label>
-                    <select
-                        value={exam.room}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                room: e.target.value,
-                            })
-                        }
-                    >
-                        <option value="">-- Sélectionner une salle --</option>
-                        {availableRooms && availableRooms.length > 0 ? (
-                            availableRooms.map((r) => (
-                                <option key={r.id} value={r.name}>
-                                    {r.name} {r.capacity ? `(${r.capacity})` : ''}
-                                </option>
-                            ))
-                        ) : (
-                            <option value="">Aucune salle disponible</option>
-                        )}
-                    </select>
-                </div>
+        <div className="form-row">
+            <div className="form-group">
+                <label>Enseignant</label>
+                <select
+                    value={exam.teacher}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            teacher: e.target.value,
+                        })
+                    }
+                >
+                    <option value="">-- Sélectionner un enseignant --</option>
+                    {availableTeachers && availableTeachers.length > 0 ? (
+                        availableTeachers.map((t) => (
+                            <option key={t.id} value={t.name}>
+                                {t.name} {t.matricule ? `(${t.matricule})` : t.email}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="">Aucun enseignant disponible</option>
+                    )}
+                </select>
             </div>
 
-            <div className="form-row">
-                <div className="form-group">
-                    <label>Niveau</label>
-                    <input
-                        type="text"
-                        value={exam.niveau}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                niveau: e.target.value,
-                            })
-                        }
-                        placeholder="Ex: L1, L2, L3, M1, M2"
-                    />
-                </div>
+            <div className="form-group">
+                <label>Salle</label>
+                <select
+                    value={exam.room}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            room: e.target.value,
+                        })
+                    }
+                >
+                    <option value="">-- Sélectionner une salle --</option>
+                    {availableRooms && availableRooms.length > 0 ? (
+                        availableRooms.map((r) => (
+                            <option key={r.id} value={r.name}>
+                                {r.name} {r.capacity ? `(${r.capacity})` : ''}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="">Aucune salle disponible</option>
+                    )}
+                </select>
+            </div>
+        </div>
 
-                <div className="form-group">
-                    <label>Groupe</label>
-                    <input
-                        type="text"
-                        value={exam.group}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                group: e.target.value,
-                            })
-                        }
-                        placeholder="Ex: G1, G2, G3"
-                    />
-                </div>
+        <div className="form-row">
+            <div className="form-group">
+                <label>Niveau</label>
+                <input
+                    type="text"
+                    value={exam.niveau}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            niveau: e.target.value,
+                        })
+                    }
+                    placeholder="Ex: L1, L2, L3, M1, M2"
+                />
             </div>
 
-            <div className="form-row">
-                <div className="form-group">
-                    <label>Spécialité</label>
-                    <select
-                        value={exam.specialite}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                specialite: e.target.value,
-                            })
-                        }
-                    >
-                        <option value="informatique">Informatique</option>
-                        <option value="mathematiques">Mathématiques</option>
-                        <option value="physique">Physique</option>
-                        <option value="chimie">Chimie</option>
-                    </select>
-                </div>
+            <div className="form-group">
+                <label>Groupe</label>
+                <input
+                    type="text"
+                    value={exam.group}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            group: e.target.value,
+                        })
+                    }
+                    placeholder="Ex: G1, G2, G3"
+                />
+            </div>
+        </div>
 
-                <div className="form-group">
-                    <label>Date</label>
-                    <input
-                        type="date"
-                        value={exam.date}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                date: e.target.value,
-                            })
-                        }
-                    />
-                </div>
+        <div className="form-row">
+            <div className="form-group">
+                <label>Spécialité</label>
+                <select
+                    value={exam.specialite}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            specialite: e.target.value,
+                        })
+                    }
+                >
+                    <option value="informatique">Informatique</option>
+                    <option value="mathematiques">Mathématiques</option>
+                    <option value="physique">Physique</option>
+                    <option value="chimie">Chimie</option>
+                </select>
             </div>
 
-            <div className="form-row">
-                <div className="form-group">
-                    <label>Heure de début</label>
-                    <input
-                        type="time"
-                        value={exam.startTime}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                startTime: e.target.value,
-                            })
-                        }
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Heure de fin</label>
-                    <input
-                        type="time"
-                        value={exam.endTime}
-                        onChange={(e) =>
-                            setExam({
-                                ...exam,
-                                endTime: e.target.value,
-                            })
-                        }
-                    />
-                </div>
+            <div className="form-group">
+                <label>Date</label>
+                <input
+                    type="date"
+                    value={exam.date}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            date: e.target.value,
+                        })
+                    }
+                />
             </div>
+        </div>
+
+        <div className="form-row">
+            <div className="form-group">
+                <label>Heure de début</label>
+                <input
+                    type="time"
+                    value={exam.startTime}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            startTime: e.target.value,
+                        })
+                    }
+                />
+            </div>
+
+            <div className="form-group">
+                <label>Heure de fin</label>
+                <input
+                    type="time"
+                    value={exam.endTime}
+                    onChange={(e) =>
+                        setExam({
+                            ...exam,
+                            endTime: e.target.value,
+                        })
+                    }
+                />
+            </div>
+        </div>
 
             <div className="form-actions">
                 <button className="btn-secondary" onClick={onCancel}>
@@ -652,11 +612,11 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRoo
     );
 };
 
-/* ================= TABLE SECTION (REUSABLE) ================= */
+/* ================= TABLE ================= */
 const Section = ({ title, data, onEdit, onDelete }) => (
-    <section className="exam-section">
+    <div className="exam-section">
         <h2>{title}</h2>
-        <table className="data-table">
+        <table className="exam-table">
             <thead>
                 <tr>
                     <th>Module</th>
@@ -666,54 +626,51 @@ const Section = ({ title, data, onEdit, onDelete }) => (
                     <th>Niveau</th>
                     <th>Groupe</th>
                     <th>Date</th>
-                    <th>Début</th>
-                    <th>Fin</th>
+                    <th>Heure début</th>
+                    <th>Heure fin</th>
                     <th>Actions</th>
                 </tr>
             </thead>
+
             <tbody>
-                {data.length > 0 ? (
-                    data.map((exam) => (
-                        <tr key={exam.id}>
-                            <td>{exam.module}</td>
-                            <td>{exam.teacher || "-"}</td>
-                            <td>{exam.room}</td>
-                            <td>{exam.specialite}</td>
-                            <td>{exam.niveau}</td>
-                            <td>{exam.group}</td>
-                            <td>{exam.date}</td>
-                            <td>{exam.start_time}</td>
-                            <td>{exam.end_time}</td>
-                            <td>
-                                <div className="action-buttons">
-                                    <button
-                                        className="btn-edit"
-                                        onClick={() => onEdit(exam)}
-                                        title="Modifier"
-                                    >
-                                        ✏️
-                                    </button>
-                                    <button
-                                        className="btn-delete"
-                                        onClick={() => onDelete(exam)}
-                                        title="Supprimer"
-                                    >
-                                        🗑️
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))
-                ) : (
+                {data.length === 0 ? (
                     <tr>
-                        <td colSpan="10" className="no-data">
+                        <td colSpan="11" className="empty">
                             Aucun examen
                         </td>
                     </tr>
+                ) : (
+                    data.map((e) => (
+                        <tr key={e.id}>
+                            <td>{e.module}</td>
+                            <td>{e.teacher}</td>
+                            <td>{e.room}</td>
+                            <td>{e.specialite}</td>
+                            <td>{e.niveau}</td>
+                            <td>{e.group}</td>
+                            <td>{e.date}</td>
+                            <td>{e.start_time || e.startTime}</td>
+                            <td>{e.end_time || e.endTime}</td>
+                            <td className="actions">
+                                <button
+                                    className="btn-edit"
+                                    onClick={() => onEdit(e)}
+                                >
+                                    ✏️
+                                </button>
+                                <button
+                                    className="btn-delete"
+                                    onClick={() => onDelete(e)}
+                                >
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                    ))
                 )}
             </tbody>
         </table>
-    </section>
+    </div>
 );
 
 export default ExamManagement;

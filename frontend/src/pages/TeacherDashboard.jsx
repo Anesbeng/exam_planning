@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Modal from "./UI/Modal";
@@ -820,7 +820,6 @@ export default function EspaceEnseignants() {
                         </button>
                     </div>
                 </div>
-            </Modal>
 
 
             <footer className="bg-white border-t border-[#768FA6] mt-auto fade-in">
@@ -829,6 +828,16 @@ export default function EspaceEnseignants() {
                         <p className="text-sm text-[#768FA6] font-montserrat">
                             {t.copyright}
                         </p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow">
+                        <h3 className="text-xl font-semibold mb-2">
+                            Exam Schedule
+                        </h3>
+                        <p className="text-gray-600">View your exam schedule</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow">
+                        <h3 className="text-xl font-semibold mb-2">Students</h3>
+                        <p className="text-gray-600">Manage your students</p>
                     </div>
                 </div>
             </footer>

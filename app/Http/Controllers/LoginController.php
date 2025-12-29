@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
@@ -13,25 +15,32 @@ class LoginController extends Controller
     {
         // Validate input
         $request->validate([
-            'matricule' => 'required|string',
-            'password' => 'required|string',
+            'matricule' => 'required',
+            'password' => 'required',
         ]);
 
-        // Find user by matricule
+        // Try to find user by matricule
         $user = User::where('matricule', $request->matricule)->first();
 
-        // Check if user exists and password is correct
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        // Check if user exists
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Matricule ou mot de passe incorrect'
+                'message' => 'Matricule not found'
             ], 401);
         }
 
-        // Create a Sanctum token for API access
-        $token = $user->createToken('spa-token')->plainTextToken;
+        // Check password
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Incorrect password'
+            ], 401);
+        }
 
-        // Return user data + token (exactly what your React app expects)
+        // Log the user in
+        Auth::login($user);
+
         return response()->json([
             'success' => true,
             'message' => 'Connexion réussie',
@@ -41,34 +50,20 @@ class LoginController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-                'specialite' => $user->specialite ?? null,
-                'niveau' => $user->niveau ?? null,
-                'annee_scolaire' => $user->annee_scolaire ?? null,
-                'groupe' => $user->groupe ?? null,
-            ],
-            'token' => $token  // This is critical!
+                'specialite' => $user->specialite,
+                'niveau' => $user->niveau,
+                'annee_scolaire' => $user->annee_scolaire,
+                'groupe' => $user->groupe,
+            ]
         ], 200);
     }
 
-    /**
-     * Logout - Revoke the current access token
-     */
     public function logout(Request $request)
     {
-        // Get the authenticated user (via token)
-        $user = $request->user();
-
-        if ($user) {
-            // Revoke only the current token (not all tokens)
-            $request->user()->currentAccessToken()->delete();
-
-            // Optional: Revoke all tokens (full logout from all devices)
-            // $user->tokens()->delete();
-        }
-
+        Auth::logout();
         return response()->json([
             'success' => true,
-            'message' => 'Déconnexion réussie'
+            'message' => 'Logged out successfully'
         ]);
     }
 }
