@@ -11,6 +11,20 @@ const ExamManagement = () => {
     const [exams, setExams] = useState([]);
     const [selectedExam, setSelectedExam] = useState(null);
 
+    const [newExam, setNewExam] = useState({
+        type: "examen",
+        module: "",
+        teacher: "",
+        teacherMatricule: "",
+        room: "",
+        specialite: "informatique",
+        niveau: "",
+        group: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+    });
+
     const [availableRoomsNew, setAvailableRoomsNew] = useState([]);
     const [availableRoomsEdit, setAvailableRoomsEdit] = useState([]);
 
@@ -19,20 +33,6 @@ const ExamManagement = () => {
     const [levels, setLevels] = useState([]);
     const [specialties, setSpecialties] = useState([]);
     const [groups, setGroups] = useState([]);
-
-    const emptyExam = {
-        type: "examen",
-        module: "",
-        teacher: "", // This will be the teacher's name
-        teacherMatricule: "", // ✅ NEW: Store matricule separately
-        room: "",
-        specialite: "",
-        niveau: "",
-        group: "",
-        date: "",
-        startTime: "",
-        endTime: "",
-    };
 
     const [editExam, setEditExam] = useState({
         type: "",
@@ -105,7 +105,9 @@ const ExamManagement = () => {
 
     useEffect(() => {
         // fetch available rooms when new exam date/time changes
-        fetchAvailableRoomsForNew();
+        if (newExam.date && newExam.startTime && newExam.endTime) {
+            fetchAvailableRoomsForNew();
+        }
         // also refresh teachers & modules when preparing to add an exam
         if (showAddExamModal) {
             fetchTeachers();
@@ -116,8 +118,13 @@ const ExamManagement = () => {
 
     // fetch teachers on mount and when add/edit modals open
     const fetchTeachers = async () => {
-        const res = await api.get("/teachers");
-        setTeachers(res.data.teachers || []);
+        try {
+            const res = await api.get("/teachers");
+            setTeachers(res.data.teachers || []);
+        } catch (err) {
+            console.error('Fetch teachers error:', err);
+            setTeachers([]);
+        }
     };
 
     const fetchModules = async () => {
@@ -130,21 +137,34 @@ const ExamManagement = () => {
         }
     };
 
+    const fetchAcademicData = async () => {
+        try {
+            // Fetch levels, specialties, groups if needed
+            // For now, using hardcoded values or empty arrays
+            setLevels(['L1', 'L2', 'L3', 'M1', 'M2']);
+            setSpecialties(['informatique', 'mathematiques', 'physique', 'chimie']);
+            setGroups(['G1', 'G2', 'G3', 'G4']);
+        } catch (err) {
+            console.error('Fetch academic data error:', err);
+        }
+    };
+
     useEffect(() => {
         // initial fetch
         fetchTeachers();
         fetchModules();
     }, []);
 
-
     const fetchAvailableRoomsForEdit = async () => {
+        if (!selectedExam) return;
+        
         try {
             const res = await api.get("/salles/available", {
                 params: {
-                    date: exam.date,
-                    start_time: exam.startTime,
-                    end_time: exam.endTime,
-                    exclude_exam_id: excludeId,
+                    date: editExam.date,
+                    start_time: editExam.startTime,
+                    end_time: editExam.endTime,
+                    exclude_exam_id: selectedExam.id,
                 },
             });
             setAvailableRoomsEdit(res.data.salles || []);
@@ -158,7 +178,9 @@ const ExamManagement = () => {
 
     useEffect(() => {
         // fetch available rooms when edit exam date/time or selected exam change
-        if (selectedExam) fetchAvailableRoomsForEdit();
+        if (selectedExam && editExam.date && editExam.startTime && editExam.endTime) {
+            fetchAvailableRoomsForEdit();
+        }
         // when edit modal opens, also refresh teachers and modules
         if (showEditExamModal) {
             fetchTeachers();
@@ -201,6 +223,7 @@ const ExamManagement = () => {
                 type: "examen",
                 module: "",
                 teacher: "",
+                teacherMatricule: "",
                 room: "",
                 niveau: "",
                 group: "",
@@ -238,6 +261,7 @@ const ExamManagement = () => {
             date: exam.date,
             startTime: exam.start_time,
             endTime: exam.end_time,
+            specialite: exam.specialite,
         });
         setShowEditExamModal(true);
     };
@@ -354,12 +378,9 @@ const ExamManagement = () => {
                 <ExamForm
                     exam={newExam}
                     setExam={setNewExam}
-                    rooms={availableRoomsNew}
-                    teachers={teachers}
-                    modules={modules}
-                    levels={levels}
-                    specialties={specialties}
-                    groups={groups}
+                    availableRooms={availableRoomsNew}
+                    availableTeachers={teachers}
+                    availableModules={modules}
                     onSubmit={handleAddExam}
                     onCancel={() => {
                         setShowAddExamModal(false);
@@ -367,6 +388,7 @@ const ExamManagement = () => {
                             type: "examen",
                             module: "",
                             teacher: "",
+                            teacherMatricule: "",
                             room: "",
                             niveau: "",
                             group: "",
@@ -389,12 +411,9 @@ const ExamManagement = () => {
                 <ExamForm
                     exam={editExam}
                     setExam={setEditExam}
-                    rooms={availableRoomsEdit}
-                    teachers={teachers}
-                    modules={modules}
-                    levels={levels}
-                    specialties={specialties}
-                    groups={groups}
+                    availableRooms={availableRoomsEdit}
+                    availableTeachers={teachers}
+                    availableModules={modules}
                     onSubmit={handleUpdateExam}
                     onCancel={() => setShowEditExamModal(false)}
                     submitLabel="Modifier"
@@ -407,7 +426,15 @@ const ExamManagement = () => {
                 onClose={() => setShowDeleteConfirmModal(false)}
                 title="Supprimer"
             >
-                <button onClick={handleDeleteExam}>Confirmer</button>
+                <p>Êtes-vous sûr de vouloir supprimer cet examen ?</p>
+                <div className="form-actions">
+                    <button className="btn-secondary" onClick={() => setShowDeleteConfirmModal(false)}>
+                        Annuler
+                    </button>
+                    <button className="btn-primary" onClick={handleDeleteExam}>
+                        Confirmer
+                    </button>
+                </div>
             </Modal>
         </div>
     );
@@ -600,17 +627,16 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRoo
             </div>
         </div>
 
-            <div className="form-actions">
-                <button className="btn-secondary" onClick={onCancel}>
-                    Annuler
-                </button>
-                <button className="btn-primary" onClick={onSubmit}>
-                    {submitLabel}
-                </button>
-            </div>
+        <div className="form-actions">
+            <button className="btn-secondary" onClick={onCancel}>
+                Annuler
+            </button>
+            <button className="btn-primary" onClick={onSubmit}>
+                {submitLabel}
+            </button>
         </div>
-    );
-};
+    </div>
+);
 
 /* ================= TABLE ================= */
 const Section = ({ title, data, onEdit, onDelete }) => (
@@ -635,7 +661,7 @@ const Section = ({ title, data, onEdit, onDelete }) => (
             <tbody>
                 {data.length === 0 ? (
                     <tr>
-                        <td colSpan="11" className="empty">
+                        <td colSpan="10" className="empty">
                             Aucun examen
                         </td>
                     </tr>
