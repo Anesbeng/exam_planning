@@ -93,7 +93,7 @@ export default function EspaceEtudiants() {
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user || user.role !== "student") {
-            navigate("/Login");
+            navigate("/");
             return;
         }
         fetchStudentExams(user.matricule);
@@ -387,10 +387,28 @@ export default function EspaceEtudiants() {
         );
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+    try {
+        // Call the logout endpoint to invalidate the token server-side
+        await api.post('/auth/logout'); // Adjust the endpoint as per your backend
+        // If your backend doesn't require a body or specific headers, this is fine
+    } catch (err) {
+        // Even if the logout request fails (e.g., network issue), 
+        // we still want to clear local data for security
+        console.warn("Logout API failed, proceeding with local cleanup:", err);
+    } finally {
+        // Always clear local data regardless of API success/failure
         localStorage.removeItem("user");
-        navigate("/");
-    };
+        
+        // Optional: Clear any auth token if stored separately
+        // localStorage.removeItem("token");
+        // Or if using axios defaults:
+        // delete api.defaults.headers.common['Authorization'];
+
+        // Redirect to login or home
+        navigate("/"); // Better to go directly to Login
+    }
+};
 
     if (loading) {
         return (

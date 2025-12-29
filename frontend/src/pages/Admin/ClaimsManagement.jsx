@@ -32,13 +32,16 @@ const ClaimsManagement = () => {
 
     const resolveClaim = async (id) => {
         try {
-            await api.put(`/claims/${id}`, { status: "resolved" });
+            await api.put(`/claims/${id}`, { status: "approved" });
             // notify others
             localStorage.setItem("claimUpdate", Date.now().toString());
             fetchClaims();
         } catch (err) {
             console.error("Resolve error:", err);
-            alert("Erreur lors de la résolution.");
+            const errorMessage = err.response ? 
+                `${err.response.status}: ${JSON.stringify(err.response.data)}` : 
+                err.message;
+            alert(`Erreur lors de la résolution: ${errorMessage}`);
         }
     };
 
@@ -91,7 +94,7 @@ const ClaimsManagement = () => {
                                 <td>{c.status}</td>
                                 <td>
                                     <div className="flex space-x-2">
-                                        {c.status !== "resolved" && (
+                                        {c.status !== "approved" && (
                                             <button
                                                 className="btn-primary px-3 py-1"
                                                 onClick={() => resolveClaim(c.id)}

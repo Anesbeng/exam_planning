@@ -317,7 +317,7 @@ export default function EspaceEnseignants() {
                     style={{ width: "800px" }}
                 >
                     <h2 className="text-center text-[#0B2844] font-semibold font-montserrat mb-8 text-2xl">
-                        {t.teacherProfile}
+                        {t.teacherProfile || "Profil Enseignant"}
                     </h2>
 
                     <div className="flex justify-center mb-8">
@@ -570,8 +570,9 @@ export default function EspaceEnseignants() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#E6EEF7]">
-                <div className="text-[#0B2844] text-xl font-semibold">
-                    {t.loading}
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-[#3A5377] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-[#0B2844] font-montserrat font-semibold">{t.loading || "Chargement..."}</p>
                 </div>
             </div>
         );
@@ -579,15 +580,15 @@ export default function EspaceEnseignants() {
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#E6EEF7]">
-                <div className="text-red-600 text-xl font-semibold mb-4">
-                    {t.error} {error}
+            <div className="flex flex-col items-center justify-center min-h-screen bg-[#E6EEF7] p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full border-2 border-red-500">
+                    <p className="text-red-600 mb-4">{t.error || "Erreur"}: {error}</p>
                 </div>
                 <button
                     onClick={() => window.location.reload()}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover-scale"
                 >
-                    {t.retry}
+                    {t.retry || "Réessayer"}
                 </button>
             </div>
         );

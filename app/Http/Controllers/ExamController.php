@@ -6,6 +6,8 @@ use App\Models\Exam;
 use App\Models\Module;
 use App\Models\Salle;
 use Illuminate\Http\Request;
+use App\Models\Notification;
+use Illuminate\Support\Facades\Log;
 
 class ExamController extends Controller
 {
@@ -35,7 +37,8 @@ class ExamController extends Controller
             }
         }
 
-        Exam::create([
+        // Create the exam
+        $exam = Exam::create([
             'type' => $request->type,
             'module' => $request->module,
             'teacher' => $request->teacher,
@@ -49,8 +52,12 @@ class ExamController extends Controller
             'semester' => $request->semester,
         ]);
 
+        // ✅ CREATE NOTIFICATION AFTER EXAM IS CREATED
+        $this->createExamNotification($exam, $request->type, $request->teacher);
+
         return response()->json([
-            'message' => 'Exam created successfully'
+            'message' => 'Exam created successfully',
+            'exam' => $exam
         ]);
     }
 
@@ -74,6 +81,7 @@ class ExamController extends Controller
             }
         }
 
+        // Update the exam
         $exam->update([
             'type' => $request->type,
             'module' => $request->module,
@@ -88,10 +96,41 @@ class ExamController extends Controller
             'semester' => $request->semester,
         ]);
 
+        // ✅ CREATE NOTIFICATION AFTER EXAM IS UPDATED
+        $this->createExamNotification($exam, $request->type, $request->teacher);
+
         return response()->json([
-            'message' => 'Exam updated successfully'
+            'message' => 'Exam updated successfully',
+            'exam' => $exam
         ]);
     }
+
+    
+/**
+ * Get all exams assigned to a specific teacher, grouped by type
+ */
+public function getTeacherExams(Request $request)
+{
+    $matricule = $request->query('matricule');
+
+    if (!$matricule) {
+        return response()->json(['message' => 'Matricule is required'], 400);
+    }
+
+    // Fetch exams where the teacher field matches the matricule
+    $teacherExams = Exam::where('teacher', $matricule)->get();
+
+    // Group them correctly for the frontend
+    $exams = $teacherExams->where('type', 'examen')->values();
+    $cc = $teacherExams->where('type', 'cc')->values();
+    $rattrapage = $teacherExams->where('type', 'rattrapage')->values();
+
+    return response()->json([
+        'exams' => $exams,
+        'cc' => $cc,
+        'rattrapage' => $rattrapage,
+    ]);
+}
 
     public function destroy($id)
     {
@@ -101,4 +140,54 @@ class ExamController extends Controller
             'message' => 'Exam deleted successfully'
         ]);
     }
+
+    /**
+     * ✅ Create a notification for the teacher about the exam
+     * This method is now properly called in store() and update()
+     */
+    private function createExamNotification($exam, $type, $teacherMatricule)
+    {
+        if (!$teacherMatricule) {
+            return;
+        }
+
+        try {
+            $examDate = date('d/m/Y', strtotime($exam->date));
+            
+            // ✅ Map exam type correctly for the database enum
+            $examTypeForDb = $this->mapExamType($type);
+            
+            $message = "Un nouvel examen a été planifié pour le module {$exam->module} " .
+                       "le {$examDate} de {$exam->start_time} à {$exam->end_time} " .
+                       "en salle {$exam->room}.";
+
+            Notification::create([
+                'teacher_matricule' => $teacherMatricule,
+                'exam_id' => $exam->id,
+                'exam_type' => $examTypeForDb,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            // Log the error but don't fail the exam creation
+            Log::error('Failed to create notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ✅ Map the exam type to match database enum values
+     * Handles: 'examen' -> 'exam', 'cc' -> 'cc', 'rattrapage' -> 'rattrapage'
+     */
+    private function mapExamType($type)
+    {
+        $typeMap = [
+            'examen' => 'exam',
+            'exam' => 'exam',
+            'cc' => 'cc',
+            'rattrapage' => 'rattrapage',
+        ];
+
+        return $typeMap[strtolower($type)] ?? 'exam';
+    }
 }
+
+
