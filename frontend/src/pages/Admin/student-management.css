@@ -1,170 +1,346 @@
-/* ================= ROOT ================= */
+/* =============================================
+   STUDENT MANAGEMENT - MODERN DESIGN
+   ============================================= */
+
 .student-management {
-    padding: 25px;
-    background: #f4f6f9;
+    padding: 32px;
+    background: #f8fafc;
     min-height: 100vh;
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
 }
 
-/* ================= HEADER ================= */
+/* HEADER */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .page-header h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1f2937;
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.5px;
 }
 
-.page-header .actions {
+.header-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.page-header input {
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    outline: none;
-    min-width: 220px;
-}
-
-.page-header button {
+.header-actions input {
     padding: 10px 14px;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    min-width: 220px;
+    outline: none;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.header-actions input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.header-actions input::placeholder {
+    color: #94a3b8;
+}
+
+.header-actions button {
+    padding: 10px 20px;
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    font-weight: 500;
-    background: #e5e7eb;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
-.page-header button.primary {
+/* BUTTONS */
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn-primary:hover {
     background: #2563eb;
-    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
-.page-header button:hover {
-    opacity: 0.9;
+.btn-secondary {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
 }
 
-/* ================= TABLE ================= */
-.table-wrapper {
-    background: #fff;
+.btn-secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.btn-edit {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.btn-edit:hover {
+    background: #fde68a;
+    transform: scale(1.05);
+}
+
+.btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.btn-delete:hover {
+    background: #fecaca;
+    transform: scale(1.05);
+}
+
+/* TABLE - FIXED GAPS */
+.table-container {
+    background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    overflow-x: auto;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
 }
 
-.table-wrapper table {
+.data-table {
     width: 100%;
     border-collapse: collapse;
+    border-spacing: 0;
+    background: #ffffff;
 }
 
-.table-wrapper th,
-.table-wrapper td {
-    padding: 14px;
+.data-table th,
+.data-table td {
+    padding: 16px 20px;
     text-align: left;
     font-size: 14px;
 }
 
-.table-wrapper th {
-    background: #f9fafb;
-    color: #374151;
+.data-table th {
+    background: #f8fafc;
+    color: #64748b;
     font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
 }
 
-.table-wrapper tr {
-    border-bottom: 1px solid #e5e7eb;
+.data-table td {
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.table-wrapper tr:hover {
-    background: #f3f4f6;
+.data-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
-/* ================= ACTIONS ================= */
-.table-actions {
+.data-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.no-data {
+    text-align: center;
+    padding: 48px 20px !important;
+    color: #64748b;
+    font-style: italic;
+}
+
+.actions {
     display: flex;
     gap: 8px;
 }
 
-.table-actions button {
+.actions button {
     border: none;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
+    transition: all 0.2s;
 }
 
-.table-actions .edit {
-    background: #facc15;
-}
-
-.table-actions .delete {
-    background: #ef4444;
-    color: #fff;
-}
-
-/* ================= PAGINATION ================= */
-.pagination {
-    margin-top: 20px;
+/* FORM */
+.form {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
 }
 
-.pagination button {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: #e5e7eb;
-    cursor: pointer;
+.form-group label {
+    font-size: 13px;
+    color: #0f172a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
-.pagination button.active {
-    background: #2563eb;
-    color: white;
-}
-
-.pagination button:hover {
-    opacity: 0.9;
-}
-
-/* ================= FORM ================= */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-bottom: 15px;
-}
-
-.form-grid input {
-    padding: 10px;
+.form-group input,
+.form-group select {
+    padding: 12px 14px;
     border-radius: 8px;
-    border: 1px solid #d1d5db;
+    border: 2px solid #e2e8f0;
     outline: none;
+    font-size: 14px;
+    background: #ffffff;
+    transition: all 0.2s;
 }
 
-/* ================= LOADING ================= */
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #e2e8f0;
+}
+
+/* IMPORT */
+.import-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.import-info {
+    background: #eff6ff;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+    border-left: 4px solid #3b82f6;
+}
+
+.import-info ul {
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.import-info li {
+    margin: 5px 0;
+    color: #64748b;
+}
+
+.file-selected {
+    font-size: 14px;
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.form-group input[type="file"] {
+    padding: 10px;
+    cursor: pointer;
+    border: 2px dashed #e2e8f0;
+    background: #f8fafc;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.form-group input[type="file"]::file-selector-button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.2s;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+    background: #2563eb;
+}
+
+/* LOADING */
 .loading {
     text-align: center;
-    padding: 30px;
-    color: #6b7280;
+    padding: 48px 20px;
+    color: #64748b;
     font-size: 16px;
+    font-weight: 500;
 }
 
-/* ================= RESPONSIVE ================= */
+/* RESPONSIVE */
 @media (max-width: 768px) {
+    .student-management {
+        padding: 16px;
+    }
+
     .page-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
     }
 
-    .page-header .actions {
-        flex-wrap: wrap;
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .header-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .header-actions input,
+    .header-actions button {
+        width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        min-width: 600px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions button {
+        width: 100%;
     }
 }
