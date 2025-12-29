@@ -1,6 +1,8 @@
+// Login.jsx (Updated)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios"; // ← Add this import (adjust path if needed)
+import api from "../api/axios";
+import "../styles/login.css";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -15,14 +17,12 @@ export default function Login() {
         setLoading(true);
 
         try {
-            // Use api instead of fetch
             const response = await api.post("/Login", {
                 matricule,
-                password
+                password,
             });
 
             const data = response.data;
-
             localStorage.setItem("user", JSON.stringify(data.user));
 
             switch (data.user.role) {
@@ -37,24 +37,37 @@ export default function Login() {
                     break;
                 default:
                     setError("Unknown role");
-                    setLoading(false);
             }
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong. Try again.");
+            setError(
+                err.response?.data?.message ||
+                "Something went wrong. Try again."
+            );
+        } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#E6EEF7] flex flex-col items-center pt-10">
+        <div className="login-page">
+            {/* Subtle professional blob backgrounds */}
+            <div className="blob blob-1"></div>
+            <div className="blob blob-2"></div>
+            
+            {/* University-themed floating elements */}
+            <div className="themed-shape shape-book">📚</div>
+            <div className="themed-shape shape-computer">💻</div>
+            <div className="themed-shape shape-graduation">🎓</div>
+            <div className="themed-shape shape-study">📝</div>
+            
             <img
-                src="/logouniversite.jpg"
+                src="/logouni.png"
                 alt="UABT Logo"
-                className="w-32 mb-6"
+                className="login-logo"
             />
 
-            <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
-                <h1 className="text-2xl font-semibold text-center mb-2 text-[#0B2844]">
+            <div className="login-card">
+                <h1 className="text-2xl font-semibold text-center text-[#0B2844]">
                     UABT
                 </h1>
 
@@ -68,7 +81,7 @@ export default function Login() {
                         placeholder="Matricule"
                         value={matricule}
                         onChange={(e) => setMatricule(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="login-input"
                         required
                     />
 
@@ -77,21 +90,23 @@ export default function Login() {
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="login-input"
                         required
                     />
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-blue-600 text-white rounded-md py-2 hover:bg-blue-700 transition disabled:opacity-50"
+                        className="login-button"
                     >
-                        {loading ? "Logging in..." : "Log In"}
+                        {loading ? <div className="spinner"></div> : "Log In"}
                     </button>
                 </form>
 
                 {error && (
-                    <p className="text-red-600 text-center mt-4">{error}</p>
+                    <p className="login-error">
+                        {error}
+                    </p>
                 )}
 
                 <p
