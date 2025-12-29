@@ -26,8 +26,16 @@ class TeacherExamController extends Controller
 
     if (!$teacher) {
         return response()->json([
-            'message' => 'Teacher not found'
-        ], 404);
+            'teacher' => [
+                'name' => $teacher->name,
+                'email' => $teacher->email,
+                'matricule' => $teacher->matricule,
+                'email' => $teacher->email,
+            ],
+            'exams' => $mergeResults($baseQueryByTeacher, $baseQueryByGroup, 'examen'),
+            'cc' => $mergeResults($baseQueryByTeacher, $baseQueryByGroup, 'cc'),
+            'rattrapage' => $mergeResults($baseQueryByTeacher, $baseQueryByGroup, 'rattrapage'),
+        ]);
     }
 
     // ✅ FIXED: Query by matricule instead of name

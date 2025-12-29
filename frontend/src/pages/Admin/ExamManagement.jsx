@@ -33,6 +33,7 @@ const ExamManagement = () => {
     const [levels, setLevels] = useState([]);
     const [specialties, setSpecialties] = useState([]);
     const [groups, setGroups] = useState([]);
+    const [semesters, setSemesters] = useState([]);
 
     const [editExam, setEditExam] = useState({
         type: "",
@@ -41,6 +42,7 @@ const ExamManagement = () => {
         room: "",
         niveau: "",
         group: "",
+        semester: "", // ✅ Add this line
         date: "",
         startTime: "",
         endTime: "",
@@ -138,15 +140,16 @@ const ExamManagement = () => {
     };
 
     const fetchAcademicData = async () => {
-        try {
-            // Fetch levels, specialties, groups if needed
-            // For now, using hardcoded values or empty arrays
-            setLevels(['L1', 'L2', 'L3', 'M1', 'M2']);
-            setSpecialties(['informatique', 'mathematiques', 'physique', 'chimie']);
-            setGroups(['G1', 'G2', 'G3', 'G4']);
-        } catch (err) {
-            console.error('Fetch academic data error:', err);
-        }
+        const [l, s, g, se] = await Promise.all([
+            api.get("/levels"),
+            api.get("/specialties"),
+            api.get("/groups"),
+            api.get("/semesters"),
+        ]);
+        setLevels(l.data.levels || []);
+        setSpecialties(s.data.specialties || []);
+        setGroups(g.data.groups || []);
+        setSemesters(se.data.semesters || []);
     };
 
     useEffect(() => {
@@ -191,126 +194,59 @@ const ExamManagement = () => {
 
     /* ================= CRUD ================= */
     const handleAddExam = async () => {
-        try {
-            if (!newExam.module) {
-                alert("Veuillez sélectionner un module pour cet examen.");
-                return;
-            }
-
-            if (!newExam.room) {
-                alert("Veuillez sélectionner une salle disponible pour cet examen.");
-                return;
-            }
-
-            await api.post("/exams", {
-                type: newExam.type,
-                module: newExam.module,
-                teacher: newExam.teacher,
-                room: newExam.room,
-                niveau: newExam.niveau,
-                group: newExam.group,
-                date: newExam.date,
-                start_time: newExam.startTime,
-                end_time: newExam.endTime,
-                specialite: newExam.specialite,
-                semester: 1,
-            });
-
-            setShowAddExamModal(false);
-
-            // Reset form
-            setNewExam({
-                type: "examen",
-                module: "",
-                teacher: "",
-                teacherMatricule: "",
-                room: "",
-                niveau: "",
-                group: "",
-                date: "",
-                startTime: "",
-                endTime: "",
-                specialite: "informatique",
-            });
-
-            fetchExams();
-            // notify other tabs (teachers) that exams changed
-            localStorage.setItem('examUpdate', Date.now().toString());
-            alert("Examen ajouté avec succès!");
-        } catch (err) {
-            console.error("Create error", err);
-            const message = err?.response?.data?.message || "Erreur lors de la création de l'examen";
-            alert(message);
-        }
-    };
-
-    /* ================= EDIT EXAM ================= */
-    const handleEditClick = async (exam) => {
-        setSelectedExam(exam);
-        
-        // ✅ Find the teacher's matricule from the teacher name
-        const teacher = teachers.find(t => t.name === exam.teacher);
-        
-        setEditExam({
-            type: exam.type,
-            module: exam.module,
-            teacher: exam.teacher || "",
-            room: exam.room,
-            niveau: exam.niveau,
-            group: exam.group,
-            date: exam.date,
-            startTime: exam.start_time,
-            endTime: exam.end_time,
-            specialite: exam.specialite,
+        await api.post("/exams", {
+            type: newExam.type,
+            module: newExam.module,
+            teacher: newExam.teacher,
+            room: newExam.room,
+            specialite: newExam.specialite,
+            niveau: newExam.niveau,
+            group: newExam.group,
+            date: newExam.date,
+            start_time: newExam.startTime,
+            end_time: newExam.endTime,
+            semester: newExam.semester, // ✅ Add this line
         });
-        setShowEditExamModal(true);
+        setShowAddExamModal(false);
+        setNewExam(emptyExam);
+        fetchExams();
     };
 
     const handleUpdateExam = async () => {
-        try {
-            if (!editExam.module) {
-                alert("Veuillez sélectionner un module pour cet examen.");
-                return;
-            }
-
-            if (!editExam.room) {
-                alert("Veuillez sélectionner une salle disponible pour cet examen.");
-                return;
-            }
-
-            await api.put(`/exams/${selectedExam.id}`, {
-                type: editExam.type,
-                module: editExam.module,
-                teacher: editExam.teacher,
-                room: editExam.room,
-                niveau: editExam.niveau,
-                group: editExam.group,
-                date: editExam.date,
-                start_time: editExam.startTime,
-                end_time: editExam.endTime,
-                specialite: editExam.specialite,
-                semester: 1,
-            });
-
-            setShowEditExamModal(false);
-            setSelectedExam(null);
-            fetchExams();
-            // notify other tabs (teachers) that exams changed
-            localStorage.setItem('examUpdate', Date.now().toString());
-            alert("Examen modifié avec succès!");
-        } catch (err) {
-            console.error("Update error", err);
-            const message = err?.response?.data?.message || "Erreur lors de la modification de l'examen";
-            alert(message);
-        }
+        await api.put(`/exams/${selectedExam.id}`, {
+            type: editExam.type,
+            module: editExam.module,
+            teacher: editExam.teacher,
+            room: editExam.room,
+            specialite: editExam.specialite,
+            niveau: editExam.niveau,
+            group: editExam.group,
+            date: editExam.date,
+            start_time: editExam.startTime,
+            end_time: editExam.endTime,
+            semester: editExam.semester, // ✅ Add this line
+        });
+        setShowEditExamModal(false);
+        setSelectedExam(null);
+        fetchExams();
     };
-
-    /* ================= DELETE EXAM ================= */
-    const handleDeleteClick = (exam) => {
+    const handleEditClick = (exam) => {
         setSelectedExam(exam);
-        setShowDeleteConfirmModal(true);
+        setEditExam({
+            type: exam.type,
+            module: exam.module,
+            teacher: exam.teacher,
+            room: exam.room,
+            specialite: exam.specialite,
+            niveau: exam.niveau,
+            group: exam.group,
+            semester: exam.semester,
+            date: exam.date,
+            startTime: exam.start_time,
+            endTime: exam.end_time,
+        });
+        setShowEditExamModal(true);
     };
-
     const handleDeleteExam = async () => {
         try {
             await api.delete(`/exams/${selectedExam.id}`);
@@ -378,9 +314,13 @@ const ExamManagement = () => {
                 <ExamForm
                     exam={newExam}
                     setExam={setNewExam}
-                    availableRooms={availableRoomsNew}
-                    availableTeachers={teachers}
-                    availableModules={modules}
+                    rooms={availableRoomsNew}
+                    teachers={teachers}
+                    modules={modules}
+                    levels={levels}
+                    specialties={specialties}
+                    groups={groups}
+                    semesters={semesters}
                     onSubmit={handleAddExam}
                     onCancel={() => {
                         setShowAddExamModal(false);
@@ -411,9 +351,13 @@ const ExamManagement = () => {
                 <ExamForm
                     exam={editExam}
                     setExam={setEditExam}
-                    availableRooms={availableRoomsEdit}
-                    availableTeachers={teachers}
-                    availableModules={modules}
+                    rooms={availableRoomsEdit}
+                    teachers={teachers}
+                    modules={modules}
+                    levels={levels}
+                    specialties={specialties}
+                    groups={groups}
+                    semesters={semesters}
                     onSubmit={handleUpdateExam}
                     onCancel={() => setShowEditExamModal(false)}
                     submitLabel="Modifier"
@@ -440,8 +384,21 @@ const ExamManagement = () => {
     );
 };
 
-/* ================= EXAM FORM (REUSABLE) ================= */
-const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRooms, availableTeachers, availableModules }) => (
+/* ================= FORM ================= */
+const ExamForm = ({
+    exam,
+    setExam,
+    rooms,
+    teachers,
+    modules,
+    levels,
+    specialties,
+    groups,
+    semesters,
+    onSubmit,
+    onCancel,
+    submitLabel,
+}) => (
     <div className="add-exam-form">
         <div className="form-row">
             <div className="form-group">
@@ -581,6 +538,23 @@ const ExamForm = ({ exam, setExam, onSubmit, onCancel, submitLabel, availableRoo
                     <option value="chimie">Chimie</option>
                 </select>
             </div>
+            <div className="form-group">
+                <label>Semestre</label>
+                <select
+                    value={exam.semester}
+                    onChange={(e) =>
+                        setExam({ ...exam, semester: e.target.value })
+                    }
+                >
+                    <option value="">Semestre</option>
+                    {semesters.map((s) => (
+                        <option key={s.id} value={s.name}>
+                            {s.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </div>
 
             <div className="form-group">
                 <label>Date</label>
@@ -651,6 +625,7 @@ const Section = ({ title, data, onEdit, onDelete }) => (
                     <th>Spécialité</th>
                     <th>Niveau</th>
                     <th>Groupe</th>
+                    <th>Semestre</th>
                     <th>Date</th>
                     <th>Heure début</th>
                     <th>Heure fin</th>
@@ -674,6 +649,7 @@ const Section = ({ title, data, onEdit, onDelete }) => (
                             <td>{e.specialite}</td>
                             <td>{e.niveau}</td>
                             <td>{e.group}</td>
+                            <td>{e.semester}</td>
                             <td>{e.date}</td>
                             <td>{e.start_time || e.startTime}</td>
                             <td>{e.end_time || e.endTime}</td>

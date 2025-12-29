@@ -33,6 +33,7 @@ class StudentExamController extends Controller
         return response()->json([
             'student' => [
                 'name' => $student->name,
+                'email' => $student->email, 
                 'matricule' => $student->matricule,
                 'specialite' => $student->specialite,
                 'niveau' => $student->niveau,
