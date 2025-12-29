@@ -13,6 +13,31 @@ const StudentManagement = () => {
     const [editingStudent, setEditingStudent] = useState(null);
     const [importFile, setImportFile] = useState(null);
     const [importing, setImporting] = useState(false);
+    const [levels, setLevels] = useState([]);
+    const [specialties, setSpecialties] = useState([]);
+    const [groups, setGroups] = useState([]);
+
+    useEffect(() => {
+        fetchAcademicData();
+    }, []);
+
+    const fetchAcademicData = async () => {
+        try {
+            const [l, s, g] = await Promise.all([
+                api.get("/levels"),
+                api.get("/specialties"),
+                api.get("/groups"),
+            ]);
+            setLevels(l.data.levels || []);
+            setSpecialties(s.data.specialties || []);
+            setGroups(g.data.groups || []);
+        } catch (error) {
+            console.error(
+                "Erreur lors du chargement des données académiques:",
+                error
+            );
+        }
+    };
 
     const [newStudent, setNewStudent] = useState({
         matricule: "",
@@ -456,17 +481,19 @@ const StudentManagement = () => {
                                     setNewStudent({
                                         ...newStudent,
                                         niveau: e.target.value,
+                                        groupe: "", // reset group when level changes
                                     })
                                 }
                             >
                                 <option value="">Sélectionner</option>
-                                {niveauOptions.map((niveau) => (
-                                    <option key={niveau} value={niveau}>
-                                        {niveau}
+                                {levels.map((l) => (
+                                    <option key={l.id} value={l.name}>
+                                        {l.name}
                                     </option>
                                 ))}
                             </select>
                         </div>
+
                         <div className="form-group">
                             <label>Spécialité *</label>
                             <select
@@ -475,24 +502,22 @@ const StudentManagement = () => {
                                     setNewStudent({
                                         ...newStudent,
                                         specialite: e.target.value,
+                                        groupe: "", // reset group when specialty changes
                                     })
                                 }
                             >
                                 <option value="">Sélectionner</option>
-                                {specialiteOptions.map((spec) => (
-                                    <option key={spec} value={spec}>
-                                        {spec}
+                                {specialties.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
                                     </option>
                                 ))}
                             </select>
                         </div>
-                    </div>
 
-                    <div className="form-row">
                         <div className="form-group">
                             <label>Groupe *</label>
-                            <input
-                                type="text"
+                            <select
                                 value={newStudent.groupe}
                                 onChange={(e) =>
                                     setNewStudent({
@@ -500,9 +525,24 @@ const StudentManagement = () => {
                                         groupe: e.target.value,
                                     })
                                 }
-                                placeholder="G1"
-                            />
+                            >
+                                <option value="">Sélectionner</option>
+                                {groups
+                                    .filter(
+                                        (g) =>
+                                            g.level.name ===
+                                                newStudent.niveau &&
+                                            g.specialty.name ===
+                                                newStudent.specialite
+                                    )
+                                    .map((g) => (
+                                        <option key={g.id} value={g.name}>
+                                            {g.name}
+                                        </option>
+                                    ))}
+                            </select>
                         </div>
+
                         <div className="form-group">
                             <label>Année Scolaire</label>
                             <input
