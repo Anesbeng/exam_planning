@@ -19,6 +19,7 @@ const ExamManagement = () => {
     const [levels, setLevels] = useState([]);
     const [specialties, setSpecialties] = useState([]);
     const [groups, setGroups] = useState([]);
+    const [semesters, setSemesters] = useState([]);
 
     const emptyExam = {
         type: "examen",
@@ -28,6 +29,7 @@ const ExamManagement = () => {
         specialite: "",
         niveau: "",
         group: "",
+        semester: "", // ✅ Add this line
         date: "",
         startTime: "",
         endTime: "",
@@ -64,14 +66,16 @@ const ExamManagement = () => {
     };
 
     const fetchAcademicData = async () => {
-        const [l, s, g] = await Promise.all([
+        const [l, s, g, se] = await Promise.all([
             api.get("/levels"),
             api.get("/specialties"),
             api.get("/groups"),
+            api.get("/semesters"),
         ]);
         setLevels(l.data.levels || []);
         setSpecialties(s.data.specialties || []);
         setGroups(g.data.groups || []);
+        setSemesters(se.data.semesters || []);
     };
 
     /* ================= ROOMS ================= */
@@ -109,38 +113,58 @@ const ExamManagement = () => {
     /* ================= CRUD ================= */
     const handleAddExam = async () => {
         await api.post("/exams", {
-            ...newExam,
+            type: newExam.type,
+            module: newExam.module,
+            teacher: newExam.teacher,
+            room: newExam.room,
+            specialite: newExam.specialite,
+            niveau: newExam.niveau,
+            group: newExam.group,
+            date: newExam.date,
             start_time: newExam.startTime,
             end_time: newExam.endTime,
-            semester: 1,
+            semester: newExam.semester, // ✅ Add this line
         });
         setShowAddExamModal(false);
         setNewExam(emptyExam);
         fetchExams();
     };
 
-    const handleEditClick = (exam) => {
-        setSelectedExam(exam);
-        setEditExam({
-            ...exam,
-            startTime: exam.start_time,
-            endTime: exam.end_time,
-        });
-        setShowEditExamModal(true);
-    };
-
     const handleUpdateExam = async () => {
         await api.put(`/exams/${selectedExam.id}`, {
-            ...editExam,
+            type: editExam.type,
+            module: editExam.module,
+            teacher: editExam.teacher,
+            room: editExam.room,
+            specialite: editExam.specialite,
+            niveau: editExam.niveau,
+            group: editExam.group,
+            date: editExam.date,
             start_time: editExam.startTime,
             end_time: editExam.endTime,
-            semester: 1,
+            semester: editExam.semester, // ✅ Add this line
         });
         setShowEditExamModal(false);
         setSelectedExam(null);
         fetchExams();
     };
-
+    const handleEditClick = (exam) => {
+        setSelectedExam(exam);
+        setEditExam({
+            type: exam.type,
+            module: exam.module,
+            teacher: exam.teacher,
+            room: exam.room,
+            specialite: exam.specialite,
+            niveau: exam.niveau,
+            group: exam.group,
+            semester: exam.semester,
+            date: exam.date,
+            startTime: exam.start_time,
+            endTime: exam.end_time,
+        });
+        setShowEditExamModal(true);
+    };
     const handleDeleteExam = async () => {
         await api.delete(`/exams/${selectedExam.id}`);
         setShowDeleteConfirmModal(false);
@@ -205,6 +229,7 @@ const ExamManagement = () => {
                     levels={levels}
                     specialties={specialties}
                     groups={groups}
+                    semesters={semesters}
                     onSubmit={handleAddExam}
                     onCancel={() => setShowAddExamModal(false)}
                     submitLabel="Enregistrer"
@@ -226,6 +251,7 @@ const ExamManagement = () => {
                     levels={levels}
                     specialties={specialties}
                     groups={groups}
+                    semesters={semesters}
                     onSubmit={handleUpdateExam}
                     onCancel={() => setShowEditExamModal(false)}
                     submitLabel="Modifier"
@@ -254,6 +280,7 @@ const ExamForm = ({
     levels,
     specialties,
     groups,
+    semesters,
     onSubmit,
     onCancel,
     submitLabel,
@@ -391,6 +418,22 @@ const ExamForm = ({
                         ))}
                 </select>
             </div>
+            <div className="form-group">
+                <label>Semestre</label>
+                <select
+                    value={exam.semester}
+                    onChange={(e) =>
+                        setExam({ ...exam, semester: e.target.value })
+                    }
+                >
+                    <option value="">Semestre</option>
+                    {semesters.map((s) => (
+                        <option key={s.id} value={s.name}>
+                            {s.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
         </div>
 
         <div className="form-row">
@@ -450,6 +493,7 @@ const Section = ({ title, data, onEdit, onDelete }) => (
                     <th>Spécialité</th>
                     <th>Niveau</th>
                     <th>Groupe</th>
+                    <th>Semestre</th>
                     <th>Date</th>
                     <th>Heure début</th>
                     <th>Heure fin</th>
@@ -473,6 +517,7 @@ const Section = ({ title, data, onEdit, onDelete }) => (
                             <td>{e.specialite}</td>
                             <td>{e.niveau}</td>
                             <td>{e.group}</td>
+                            <td>{e.semester}</td>
                             <td>{e.date}</td>
                             <td>{e.start_time || e.startTime}</td>
                             <td>{e.end_time || e.endTime}</td>

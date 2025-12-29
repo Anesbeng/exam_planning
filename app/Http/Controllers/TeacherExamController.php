@@ -53,6 +53,7 @@ class TeacherExamController extends Controller
         return response()->json([
             'teacher' => [
                 'name' => $teacher->name,
+                'email' => $teacher->email,
                 'matricule' => $teacher->matricule,
                 'email' => $teacher->email,
             ],
