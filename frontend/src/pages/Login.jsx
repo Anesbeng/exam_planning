@@ -1,4 +1,4 @@
-// Login.jsx (Updated)
+// Login.jsx (Updated with Sanctum Token Handling)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
@@ -23,8 +23,34 @@ export default function Login() {
             });
 
             const data = response.data;
-            localStorage.setItem("user", JSON.stringify(data.user));
 
+            // Expected response from Laravel:
+            // {
+            //   "user": { "id": 1, "name": "...", "matricule": "...", "role": "student", ... },
+            //   "token": "1|laravel_sanctum_abc123..."   // plain-text token
+            // }
+
+            if (!data.user || !data.token) {
+                throw new Error("Invalid response from server: missing user or token");
+            }
+
+            // Clear any old auth data
+            localStorage.removeItem("user");
+            delete api.defaults.headers.common["Authorization"];
+
+            // Create user object with token
+            const userWithToken = {
+                ...data.user,
+                token: data.token  // Attach token to user object
+            };
+
+            // Save to localStorage
+            localStorage.setItem("user", JSON.stringify(userWithToken));
+
+            // Set Authorization header for all future API requests
+            api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+
+            // Role-based navigation
             switch (data.user.role) {
                 case "admin":
                     navigate("/admin-dashboard");
@@ -36,12 +62,14 @@ export default function Login() {
                     navigate("/student-dashboard");
                     break;
                 default:
-                    setError("Unknown role");
+                    setError("Rôle inconnu ou non autorisé");
             }
         } catch (err) {
+            console.error("Login error:", err);
             setError(
                 err.response?.data?.message ||
-                "Something went wrong. Try again."
+                err.message ||
+                "Échec de la connexion. Veuillez réessayer."
             );
         } finally {
             setLoading(false);

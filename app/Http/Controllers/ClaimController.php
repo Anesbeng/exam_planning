@@ -58,7 +58,7 @@ class ClaimController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => ['required', Rule::in(['pending', 'approved', 'rejected'])]
+            'status' => ['required', Rule::in(['pending', 'approved', 'rejected', 'resolved'])]
         ]);
 
         $claim = Claim::findOrFail($id);

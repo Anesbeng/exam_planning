@@ -5,6 +5,8 @@ import logoutIcon from "./logout.png";
 import uniLogo from "./logouni.png";
 import studentIcon from "./student.png";
 import '../styles/dashboard.css'; // Added import for custom CSS with animations and styles
+import { translations } from './translations';
+
 
 export default function EspaceEtudiants() {
     const navigate = useNavigate();
@@ -19,83 +21,12 @@ export default function EspaceEtudiants() {
     const [currentView, setCurrentView] = useState("schedule"); // "schedule" or "profile"
     const [language, setLanguage] = useState("fr"); // "fr" or "ar"
 
-    // Translations object
-    const translations = {
-        fr: {
-            department: "Departement Informatique",
-            studentSpace: "Espace Etudiants",
-            examSchedule: "Planning des Examens",
-            myProfile: "Mon Profil",
-            studentProfile: "Profil Étudiant",
-            fullName: "Nom Complet",
-            studentId: "Matricule",
-            email: "Email",
-            logout: "Déconnexion",
-            specialty: "Spécialité",
-            level: "Niveau",
-            group: "Groupe",
-            semesters: "Semestres :",
-            studentName: "Nom Etudiant :",
-            module: "Module",
-            teacher: "Enseignant",
-            room: "Salle",
-            date: "Date",
-            schedule: "Horaire",
-            close: "Fermer",
-            loading: "Chargement...",
-            error: "Erreur:",
-            retry: "Réessayer",
-            noExam: "Aucun examen planifié",
-            ccS1: "PLANNING S1 - CONTRÔLE CONTINU",
-            ccS2: "PLANNING S2 - CONTRÔLE CONTINU",
-            examS1: "PLANNING S1 - EXAMENS",
-            examS2: "PLANNING S2 - EXAMENS",
-            rattS1: "PLANNING S1 - RATTRAPAGES",
-            rattS2: "PLANNING S2 - RATTRAPAGES",
-            copyright: "Copyright © 2026 Université Abou Bekr Belkaïd Tlemcen. Tous droits réservés."
-        },
-        ar: {
-            department: "قسم الإعلام الآلي",
-            studentSpace: "فضاء الطلبة",
-            examSchedule: "جدول الامتحانات",
-            myProfile: "ملفي الشخصي",
-            studentProfile: "الملف الشخصي للطالب",
-            fullName: "الاسم الكامل",
-            studentId: "رقم التسجيل",
-            email: "البريد الإلكتروني",
-            logout: "تسجيل الخروج",
-            specialty: "التخصص",
-            level: "المستوى",
-            group: "المجموعة",
-            semesters: "السداسيات:",
-            studentName: "اسم الطالب:",
-            module: "المقياس",
-            teacher: "الأستاذ",
-            room: "القاعة",
-            date: "التاريخ",
-            schedule: "التوقيت",
-            close: "إغلاق",
-            loading: "جاري التحميل...",
-            error: "خطأ:",
-            retry: "إعادة المحاولة",
-            noExam: "لا توجد امتحانات مجدولة",
-            ccS1: "جدول السداسي الأول - المراقبة المستمرة",
-            ccS2: "جدول السداسي الثاني - المراقبة المستمرة",
-            examS1: "جدول السداسي الأول - الامتحانات",
-            examS2: "جدول السداسي الثاني - الامتحانات",
-            rattS1: "جدول السداسي الأول - الاستدراك",
-            rattS2: "جدول السداسي الثاني - الاستدراك",
-            copyright: "حقوق النشر © 2026 جامعة أبو بكر بلقايد تلمسان. جميع الحقوق محفوظة."
-            
-        }
-    };
-
     const t = translations[language];
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user || user.role !== "student") {
-            navigate("/Login");
+            navigate("/");
             return;
         }
         fetchStudentExams(user.matricule);
@@ -248,10 +179,28 @@ export default function EspaceEtudiants() {
         );
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+    try {
+        // Call the logout endpoint to invalidate the token server-side
+        await api.post('/auth/logout'); // Adjust the endpoint as per your backend
+        // If your backend doesn't require a body or specific headers, this is fine
+    } catch (err) {
+        // Even if the logout request fails (e.g., network issue), 
+        // we still want to clear local data for security
+        console.warn("Logout API failed, proceeding with local cleanup:", err);
+    } finally {
+        // Always clear local data regardless of API success/failure
         localStorage.removeItem("user");
-        navigate("/");
-    };
+        
+        // Optional: Clear any auth token if stored separately
+        // localStorage.removeItem("token");
+        // Or if using axios defaults:
+        // delete api.defaults.headers.common['Authorization'];
+
+        // Redirect to login or home
+        navigate("/"); // Better to go directly to Login
+    }
+};
 
     if (loading) {
         return (

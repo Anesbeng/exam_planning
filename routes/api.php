@@ -14,70 +14,85 @@ use App\Http\Controllers\SalleController;
 use App\Http\Controllers\ImportSallesController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\StudentExamController;
-use App\Http\Controllers\ForgotPasswordController;
-use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\TeacherExamController;
 use App\Http\Controllers\ClaimController;
-
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\NotificationController;
 
+// ============================
+// PUBLIC ROUTES (No Auth Needed)
+// ============================
+
+Route::post('/Login', [LoginController::class, 'login']);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
 Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
-Route::post('/Login', [LoginController::class, 'login']);
-
-// GET route just to test if API is working
-Route::get('/login', function() {
+// Optional: Helpful message for wrong method
+Route::get('/login', function () {
     return response()->json([
-        'message' => 'Please use POST method to login',
+        'message' => 'Use POST /api/Login to authenticate',
         'status' => 'API is working'
-    ]);
+    ], 405);
 });
 
-Route::resource('exams', ExamController::class);
+// ============================
+// PROTECTED ROUTES (Require Auth)
+// ============================
 
+Route::middleware('auth:sanctum')->group(function () {
 
-Route::resource('students', StudentController::class);
-Route::resource('import', ImportController ::class);
-Route::get('/dashboard', [DashboardController::class, 'index']);
-Route::get('/users', [UserController::class, 'index']);
-Route::put('/users/{id}', [UserController::class, 'update']);
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    // Logout - Only one definition needed!
+    Route::post('/logout', [LoginController::class, 'logout']);
 
+    // Student & Teacher Exam Access
+    Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
+    Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
+    Route::get('/teacher/exams/all', [ExamController::class, 'getTeacherExams']); // if needed
 
-Route::resource('modules', ModuleController::class);
-Route::post('/modules/import', [ImportmodulesController::class, 'import']);
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
+    // User Management (Admin only? Consider adding role middleware later)
+    Route::get('/users', [UserController::class, 'index']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-Route::resource('salles', SalleController::class);
+    // Resources (CRUD)
+    Route::apiResource('exams', ExamController::class);
+    Route::apiResource('students', StudentController::class);
+    Route::apiResource('modules', ModuleController::class);
+    Route::apiResource('salles', SalleController::class);
+    Route::apiResource('teachers', TeacherController::class);
 
-// Return available rooms for a given date/time (optional: exclude_exam_id)
-Route::get('/salles/available', [SalleController::class, 'available']);
+    Route::apiResource('academic-years', AcademicYearController::class);
+    Route::apiResource('semesters', SemesterController::class);
+    Route::apiResource('levels', LevelController::class);
+    Route::apiResource('specialties', SpecialtyController::class);
+    Route::apiResource('groups', GroupController::class);
 
-Route::post('/salles/import', [ImportSallesController::class, 'import']);
-Route::resource('teachers', TeacherController::class);
+    // Imports
+    Route::post('/import/students', [ImportController::class, 'import']); // better naming
+    Route::post('/modules/import', [ImportmodulesController::class, 'import']);
+    Route::post('/salles/import', [ImportSallesController::class, 'import']);
 
+    // Available rooms
+    Route::get('/salles/available', [SalleController::class, 'available']);
 
-Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
-Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
+    // Claims
+    Route::apiResource('claims', ClaimController::class);
 
-
-
-    Route::get('/claims', [ClaimController::class, 'index']);
-    Route::put('/claims/{id}', [ClaimController::class, 'update']);
-    Route::delete('/claims/{id}', [ClaimController::class, 'destroy']);
-
-Route::post('/claims', [ClaimController::class, 'store']);
-
-
-
-
-Route::apiResource('academic-years', AcademicYearController::class);
-Route::apiResource('semesters', SemesterController::class);
-Route::apiResource('levels', LevelController::class);
-Route::apiResource('specialties', SpecialtyController::class);
-Route::apiResource('groups', GroupController::class);
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/teacher/{matricule}', [NotificationController::class, 'getTeacherNotifications']);
+        Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::put('/teacher/{matricule}/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::post('/', [NotificationController::class, 'create']);
+        Route::delete('/{id}', [NotificationController::class, 'delete']);
+    });
+});
