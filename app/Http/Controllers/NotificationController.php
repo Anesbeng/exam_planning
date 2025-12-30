@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController extends Controller
 {
@@ -14,27 +15,35 @@ class NotificationController extends Controller
     public function getTeacherNotifications($matricule)
     {
         try {
-            // ✅ FIXED: All exams are in 'exams' table, differentiated by 'type' field
-            $notifications = DB::select("
-                SELECT 
-                    n.*,
-                    e.module,
-                    e.date as exam_date,
-                    e.start_time,
-                    e.end_time,
-                    e.room,
-                    e.niveau,
-                    e.group as exam_group,
-                    e.type as exam_type_db
-                FROM notifications n
-                LEFT JOIN exams e ON n.exam_id = e.id
-                WHERE n.teacher_matricule = ?
-                ORDER BY n.created_at DESC
-                LIMIT 50
-            ", [$matricule]);
+            Log::info("🔍 Fetching notifications for teacher: {$matricule}");
+
+            // ✅ FIXED: Using Eloquent instead of raw SQL to avoid JOIN issues
+            $notifications = Notification::where('teacher_matricule', $matricule)
+                ->orderBy('created_at', 'DESC')
+                ->limit(50)
+                ->get();
+
+            Log::info("📊 Found {$notifications->count()} notifications");
 
             // Format notifications with exam details
-            $formattedNotifications = array_map(function($notif) {
+            $formattedNotifications = $notifications->map(function($notif) {
+                // Get exam details separately
+                $examDetails = null;
+                if ($notif->exam_id) {
+                    $exam = DB::table('exams')->where('id', $notif->exam_id)->first();
+                    if ($exam) {
+                        $examDetails = [
+                            'module' => $exam->module,
+                            'date' => $exam->date,
+                            'start_time' => $exam->start_time,
+                            'end_time' => $exam->end_time,
+                            'room' => $exam->room,
+                            'niveau' => $exam->niveau,
+                            'group' => $exam->group
+                        ];
+                    }
+                }
+
                 return [
                     'id' => $notif->id,
                     'teacher_matricule' => $notif->teacher_matricule,
@@ -43,22 +52,19 @@ class NotificationController extends Controller
                     'message' => $notif->message,
                     'is_read' => (bool)$notif->is_read,
                     'created_at' => $notif->created_at,
-                    'exam_details' => $notif->module ? [
-                        'module' => $notif->module,
-                        'date' => $notif->exam_date,
-                        'start_time' => $notif->start_time,
-                        'end_time' => $notif->end_time,
-                        'room' => $notif->room,
-                        'niveau' => $notif->niveau,
-                        'group' => $notif->exam_group
-                    ] : null
+                    'exam_details' => $examDetails
                 ];
-            }, $notifications);
+            });
+
+            Log::info("✅ Returning formatted notifications");
 
             return response()->json([
                 'notifications' => $formattedNotifications
             ]);
         } catch (\Exception $e) {
+            Log::error("❌ Error fetching notifications: " . $e->getMessage());
+            Log::error("Stack trace: " . $e->getTraceAsString());
+            
             return response()->json([
                 'message' => 'Error fetching notifications',
                 'error' => $e->getMessage()
@@ -76,10 +82,14 @@ class NotificationController extends Controller
             $notification->is_read = true;
             $notification->save();
 
+            Log::info("✅ Notification {$id} marked as read");
+
             return response()->json([
                 'message' => 'Notification marked as read'
             ]);
         } catch (\Exception $e) {
+            Log::error("❌ Error marking notification as read: " . $e->getMessage());
+            
             return response()->json([
                 'message' => 'Error updating notification',
                 'error' => $e->getMessage()
@@ -93,14 +103,19 @@ class NotificationController extends Controller
     public function markAllAsRead($matricule)
     {
         try {
-            Notification::where('teacher_matricule', $matricule)
+            $updated = Notification::where('teacher_matricule', $matricule)
                 ->where('is_read', false)
                 ->update(['is_read' => true]);
 
+            Log::info("✅ Marked {$updated} notifications as read for teacher {$matricule}");
+
             return response()->json([
-                'message' => 'All notifications marked as read'
+                'message' => 'All notifications marked as read',
+                'count' => $updated
             ]);
         } catch (\Exception $e) {
+            Log::error("❌ Error marking all as read: " . $e->getMessage());
+            
             return response()->json([
                 'message' => 'Error updating notifications',
                 'error' => $e->getMessage()
@@ -117,17 +132,21 @@ class NotificationController extends Controller
             $validated = $request->validate([
                 'teacher_matricule' => 'required|string',
                 'exam_id' => 'required|integer',
-                'exam_type' => 'required|in:exam,cc,rattrapage',
+                'exam_type' => 'required|in:examen,cc,rattrapage',
                 'message' => 'required|string'
             ]);
 
             $notification = Notification::create($validated);
+
+            Log::info("✅ Notification created: {$notification->id}");
 
             return response()->json([
                 'message' => 'Notification created successfully',
                 'notification' => $notification
             ], 201);
         } catch (\Exception $e) {
+            Log::error("❌ Error creating notification: " . $e->getMessage());
+            
             return response()->json([
                 'message' => 'Error creating notification',
                 'error' => $e->getMessage()
@@ -144,10 +163,14 @@ class NotificationController extends Controller
             $notification = Notification::findOrFail($id);
             $notification->delete();
 
+            Log::info("✅ Notification {$id} deleted");
+
             return response()->json([
                 'message' => 'Notification deleted successfully'
             ]);
         } catch (\Exception $e) {
+            Log::error("❌ Error deleting notification: " . $e->getMessage());
+            
             return response()->json([
                 'message' => 'Error deleting notification',
                 'error' => $e->getMessage()
