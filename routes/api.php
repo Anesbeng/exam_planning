@@ -52,6 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Student & Teacher Exam Access
     Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
     Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
+    // In your routes/api.php, update the teacher exam route:
+
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);

@@ -13,8 +13,25 @@ class ModuleController extends Controller
      */
     public function index()
     {
+        // Get all modules with teacher information
+        $modules = Module::all()->map(function ($module) {
+            // Find teacher by matricule to get their name for display
+            $teacher = User::where('matricule', $module->teacher_responsible)
+                          ->where('role', 'teacher')
+                          ->first();
+            
+            return [
+                'id' => $module->id,
+                'code' => $module->code,
+                'name' => $module->name,
+                'semester' => $module->semester,
+                'teacher_responsible' => $module->teacher_responsible,
+                'teacher_name' => $teacher ? $teacher->name : $module->teacher_responsible,
+            ];
+        });
+
         return response()->json([
-            'modules' => Module::all()
+            'modules' => $modules
         ]);
     }
 
@@ -24,7 +41,9 @@ class ModuleController extends Controller
     public function create()
     {
         return response()->json([
-            'teachers' => User::where('role', 'teacher')->get()
+            'teachers' => User::where('role', 'teacher')
+                             ->select('id', 'name', 'matricule', 'email')
+                             ->get()
         ]);
     }
 
@@ -37,8 +56,19 @@ class ModuleController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:modules,code',
             'semester' => 'required|string|max:50',
-            'teacher_responsible' => 'required|string|max:255',
+            'teacher_responsible' => 'required|string|max:255', // This will be matricule
         ]);
+
+        // Verify teacher exists
+        $teacher = User::where('matricule', $validated['teacher_responsible'])
+                      ->where('role', 'teacher')
+                      ->first();
+
+        if (!$teacher) {
+            return response()->json([
+                'message' => 'Enseignant non trouvé'
+            ], 404);
+        }
 
         $module = Module::create($validated);
 
@@ -59,8 +89,19 @@ class ModuleController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:modules,code,' . $id,
             'semester' => 'required|string|max:50',
-            'teacher_responsible' => 'required|string|max:255',
+            'teacher_responsible' => 'required|string|max:255', // This will be matricule
         ]);
+
+        // Verify teacher exists
+        $teacher = User::where('matricule', $validated['teacher_responsible'])
+                      ->where('role', 'teacher')
+                      ->first();
+
+        if (!$teacher) {
+            return response()->json([
+                'message' => 'Enseignant non trouvé'
+            ], 404);
+        }
 
         $module->update($validated);
 

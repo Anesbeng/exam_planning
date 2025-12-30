@@ -16,14 +16,18 @@ export default function EspaceEnseignants() {
     /* ================= STATES ================= */
     const [teacherData, setTeacherData] = useState(null);
     const [allExams, setAllExams] = useState([]);
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentView, setCurrentView] = useState("schedule");
     const [language, setLanguage] = useState("fr");
 
+    // Calendar view states
+    const [calendarView, setCalendarView] = useState("month"); // 'month' or 'list'
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(null);
+
     // Filter states
-    const [selectedExamType, setSelectedExamType] = useState("ALL"); // ALL, CC, EXAM, RATT
+    const [selectedExamType, setSelectedExamType] = useState("ALL");
     const [selectedSemester, setSelectedSemester] = useState("ALL");
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -32,6 +36,7 @@ export default function EspaceEnseignants() {
     const [selectedExamForClaim, setSelectedExamForClaim] = useState(null);
     const [claimMessage, setClaimMessage] = useState("");
     const [claimSubmitting, setClaimSubmitting] = useState(false);
+    const [responsableExams, setResponsableExams] = useState([]);
 
     /* ================= TRANSLATIONS ================= */
     const translations = {
@@ -40,6 +45,7 @@ export default function EspaceEnseignants() {
             teacherSpace: "Espace Enseignants",
             examSchedule: "Planning des Examens",
             myProfile: "Mon Profil",
+            responsableExams: "Modules Responsables",
             teacherProfile: "Profil Enseignant",
             fullName: "Nom Complet",
             teacherId: "Matricule",
@@ -81,12 +87,18 @@ export default function EspaceEnseignants() {
             totalExams: "Total des examens",
             type: "Type",
             allSemesters: "Tous les semestres",
+            responsableTitle: "Examens des modules dont je suis RESPONSABLE",
+            surveillant: "Surveillant",
+            notAssigned: "Non assigné",
+            viewDetails: "Voir",
+            examDetails: "Détails de l'examen",
         },
         ar: {
             department: "قسم الإعلام الآلي",
             teacherSpace: "فضاء الأساتذة",
             examSchedule: "جدول الامتحانات",
             myProfile: "ملفي الشخصي",
+            responsableExams: "المواد المسؤولة",
             teacherProfile: "الملف الشخصي للأستاذ",
             fullName: "الاسم الكامل",
             teacherId: "رقم التسجيل",
@@ -128,52 +140,112 @@ export default function EspaceEnseignants() {
             totalExams: "إجمالي الامتحانات",
             type: "النوع",
             allSemesters: "جميع السداسيات",
+            responsableTitle: "امتحانات المواد التي أشرف عليها",
+            surveillant: "المراقب",
+            notAssigned: "غير معين",
+            viewDetails: "عرض",
+            examDetails: "تفاصيل الامتحان",
         },
     };
 
     const t = translations[language];
 
     /* ================= FETCH TEACHER'S EXAMS ================= */
-    const fetchTeacherData = async (matricule) => {
+    const fetchTeacherData = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            const examResponse = await api.get(
-                `/teacher/exams?matricule=${matricule}`
-            );
+            const examResponse = await api.get(`/teacher/exams`);
             const examData = examResponse.data;
 
+            console.log("📊 Full API Response:", examData);
+            console.log("🔍 Debug Info:", examData.debug);
+            console.log(
+                "📚 Raw Responsable Modules:",
+                examData.responsable_modules
+            );
+            console.log("👤 Teacher Info:", examData.teacher);
+
+            // Set teacher data
             setTeacherData(examData.teacher);
 
-            // Combine all exams into one array with type property
-            const combinedExams = [
+            // Process responsable exams with comprehensive validation
+            const rawResponsableExams = examData.responsable_modules || [];
+            console.log(
+                "🔢 Raw Responsable Exams Count:",
+                rawResponsableExams.length
+            );
+
+            const responsableExams = rawResponsableExams.map((exam, index) => {
+                console.log(
+                    `📝 Processing Responsable Exam ${index + 1}:`,
+                    exam
+                );
+
+                return {
+                    ...exam,
+                    type: exam.type || "examen", // Default to "examen" if type is missing
+                    semester: exam.semester || "-",
+                    teacher: exam.teacher || null,
+                };
+            });
+
+            console.log("✅ Processed Responsable Exams:", responsableExams);
+            console.log(
+                "📊 Final Responsable Exams Count:",
+                responsableExams.length
+            );
+
+            // Set responsable exams
+            setResponsableExams(responsableExams);
+
+            // Process surveillance exams (where teacher is surveillant)
+            const surveillanceExams = [
                 ...(examData.exams || []).map((exam) => ({
                     ...exam,
                     type: "examen",
                 })),
-                ...(examData.cc || []).map((exam) => ({ ...exam, type: "cc" })),
+                ...(examData.cc || []).map((exam) => ({
+                    ...exam,
+                    type: "cc",
+                })),
                 ...(examData.rattrapage || []).map((exam) => ({
                     ...exam,
                     type: "rattrapage",
                 })),
             ];
 
-            // Sort by date and time
-            combinedExams.sort((a, b) => {
+            console.log(
+                "👁️ Surveillance Exams Count:",
+                surveillanceExams.length
+            );
+
+            // Sort surveillance exams by date and time
+            surveillanceExams.sort((a, b) => {
                 const dateCompare = new Date(a.date) - new Date(b.date);
                 if (dateCompare !== 0) return dateCompare;
                 return a.start_time.localeCompare(b.start_time);
             });
 
-            setAllExams(combinedExams);
+            setAllExams(surveillanceExams);
+
+            console.log("✅ Data fetch completed successfully");
+            console.log("📊 Summary:", {
+                responsableExams: responsableExams.length,
+                surveillanceExams: surveillanceExams.length,
+                totalExams: responsableExams.length + surveillanceExams.length,
+            });
         } catch (err) {
-            setError(
+            const errorMessage =
                 err.response?.data?.message ||
-                    err.message ||
-                    "Erreur lors du chargement des données"
-            );
-            console.error("Error fetching teacher data:", err);
+                err.message ||
+                "Erreur lors du chargement des données";
+
+            setError(errorMessage);
+            console.error("❌ Error fetching teacher data:", err);
+            console.error("❌ Error response:", err.response?.data);
+            console.error("❌ Error status:", err.response?.status);
         } finally {
             setLoading(false);
         }
@@ -185,8 +257,100 @@ export default function EspaceEnseignants() {
             navigate("/Login");
             return;
         }
-        fetchTeacherData(user.matricule);
+        fetchTeacherData();
     }, [navigate]);
+
+    /* ================= CALENDAR HELPER FUNCTIONS ================= */
+    /* ================= CALENDAR HELPER FUNCTIONS ================= */
+    const getCalendarData = () => {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+
+        // IMPORTANT: getDay() returns 0 for Sunday, 1 for Monday, etc.
+        // We want Sunday to be the first day of the week (index 0)
+        const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+        // Get previous month's last days
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+        // Build calendar array
+        const calendar = [];
+
+        // Previous month days
+        // We need to show the days from the previous month that appear in the first week
+        // If the month starts on Sunday (0), we don't need previous month days
+        for (let i = startingDayOfWeek; i > 0; i--) {
+            calendar.push({
+                day: prevMonthLastDay - i + 1,
+                date: new Date(year, month - 1, prevMonthLastDay - i + 1),
+                isCurrentMonth: false,
+                exams: [],
+            });
+        }
+
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = date.toISOString().split("T")[0];
+
+            // Find exams for this day
+            const dayExams = responsableExams.filter((exam) => {
+                if (!exam.date) return false;
+                const examDate = new Date(exam.date);
+                return (
+                    examDate.getDate() === day &&
+                    examDate.getMonth() === month &&
+                    examDate.getFullYear() === year
+                );
+            });
+
+            calendar.push({
+                day,
+                date,
+                isCurrentMonth: true,
+                exams: dayExams,
+            });
+        }
+
+        // Next month days
+        // We need to fill the remaining cells to complete the 6-week grid (42 cells)
+        const totalCells = 42; // 6 weeks * 7 days
+        const nextMonthDays = totalCells - calendar.length;
+
+        for (let day = 1; day <= nextMonthDays; day++) {
+            calendar.push({
+                day,
+                date: new Date(year, month + 1, day),
+                isCurrentMonth: false,
+                exams: [],
+            });
+        }
+
+        return calendar;
+    };
+
+    // Calendar navigation functions
+    const goToPreviousMonth = () => {
+        setCurrentMonth(
+            new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
+        );
+    };
+
+    const goToNextMonth = () => {
+        setCurrentMonth(
+            new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+        );
+    };
+
+    const goToToday = () => {
+        setCurrentMonth(new Date());
+        setSelectedDate(null);
+    };
 
     /* ================= FILTER LOGIC ================= */
     const getUniqueSemesters = () => {
@@ -199,7 +363,6 @@ export default function EspaceEnseignants() {
     const getFilteredExams = () => {
         let filtered = allExams;
 
-        // Filter by type
         if (selectedExamType !== "ALL") {
             const typeMap = {
                 CC: "cc",
@@ -211,14 +374,12 @@ export default function EspaceEnseignants() {
             );
         }
 
-        // Filter by semester
         if (selectedSemester !== "ALL") {
             filtered = filtered.filter(
                 (exam) => exam.semester === selectedSemester
             );
         }
 
-        // Filter by search term
         if (searchTerm.trim()) {
             const search = searchTerm.toLowerCase();
             filtered = filtered.filter(
@@ -252,14 +413,11 @@ export default function EspaceEnseignants() {
         }
 
         const doc = new jsPDF();
-
-        // Title
         doc.setFontSize(16);
         doc.text(`${t.examSchedule}`, 20, 20);
         doc.setFontSize(12);
         doc.text(`${t.fullName}: ${teacherData?.name || ""}`, 20, 30);
 
-        // Filter info
         let filterInfo = "";
         if (selectedExamType !== "ALL") {
             const typeMap = { CC: t.cc, EXAM: t.exam, RATT: t.ratt };
@@ -272,7 +430,6 @@ export default function EspaceEnseignants() {
             doc.text(filterInfo, 20, 37);
         }
 
-        // Table
         autoTable(doc, {
             head: [
                 [
@@ -298,6 +455,49 @@ export default function EspaceEnseignants() {
         });
 
         doc.save(`planning_examens_${teacherData?.name || "enseignant"}.pdf`);
+    };
+
+    const exportResponsableToPDF = () => {
+        if (!responsableExams.length) {
+            alert(t.noExam);
+            return;
+        }
+
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Examens des modules responsables", 20, 20);
+        doc.setFontSize(12);
+        doc.text(`Enseignant: ${teacherData?.name || ""}`, 20, 30);
+
+        autoTable(doc, {
+            head: [
+                [
+                    "Type",
+                    "Module",
+                    "Semestre",
+                    "Niveau/Groupe",
+                    "Salle",
+                    "Date",
+                    "Horaire",
+                    "Surveillant",
+                ],
+            ],
+            body: responsableExams.map((exam) => [
+                getExamTypeLabel(exam.type),
+                exam.module,
+                exam.semester || "-",
+                `${exam.niveau}/${exam.group}`,
+                exam.room,
+                new Date(exam.date).toLocaleDateString(),
+                `${exam.start_time} - ${exam.end_time}`,
+                exam.teacher || "Non assigné",
+            ]),
+            startY: 40,
+        });
+
+        doc.save(
+            `examens_responsables_${teacherData?.name || "enseignant"}.pdf`
+        );
     };
 
     /* ================= CLAIM FUNCTIONS ================= */
@@ -479,10 +679,8 @@ export default function EspaceEnseignants() {
 
         return (
             <div className="mt-12 px-8 fade-in">
-                {/* Filters Section */}
                 <div className="bg-[#EEF2F8] shadow-lg rounded-lg p-6 border-2 border-[#3A5377] mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Type Filter */}
                         <div>
                             <label className="block text-[#0B2844] font-semibold font-montserrat mb-2">
                                 {t.filterByType}
@@ -512,7 +710,6 @@ export default function EspaceEnseignants() {
                             </div>
                         </div>
 
-                        {/* Semester Filter */}
                         <div>
                             <label className="block text-[#0B2844] font-semibold font-montserrat mb-2">
                                 {t.filterBySemester}
@@ -533,7 +730,6 @@ export default function EspaceEnseignants() {
                             </select>
                         </div>
 
-                        {/* Search */}
                         <div>
                             <label className="block text-[#0B2844] font-semibold font-montserrat mb-2">
                                 {t.search}
@@ -548,7 +744,6 @@ export default function EspaceEnseignants() {
                         </div>
                     </div>
 
-                    {/* Stats and Export */}
                     <div className="flex justify-between items-center mt-6 pt-4 border-t border-[#3A5377]">
                         <p className="text-[#0B2844] font-semibold font-montserrat">
                             {t.totalExams}:{" "}
@@ -578,7 +773,6 @@ export default function EspaceEnseignants() {
                     </div>
                 </div>
 
-                {/* Exams Table */}
                 <div className="bg-[#EEF2F8] shadow-lg rounded-lg p-6 border-2 border-[#3A5377]">
                     {filteredExams.length === 0 ? (
                         <div className="text-center text-gray-500 py-12">
@@ -704,6 +898,683 @@ export default function EspaceEnseignants() {
         );
     };
 
+    /* ================= RESPONSABLE VIEW ================= */
+    const ResponsableView = () => {
+        console.log(
+            "🔍 ResponsableView - Responsable Exams:",
+            responsableExams
+        );
+
+        const calendarData = getCalendarData();
+        const monthNames =
+            language === "fr"
+                ? [
+                      "Janvier",
+                      "Février",
+                      "Mars",
+                      "Avril",
+                      "Mai",
+                      "Juin",
+                      "Juillet",
+                      "Août",
+                      "Septembre",
+                      "Octobre",
+                      "Novembre",
+                      "Décembre",
+                  ]
+                : [
+                      "يناير",
+                      "فبراير",
+                      "مارس",
+                      "أبريل",
+                      "مايو",
+                      "يونيو",
+                      "يوليو",
+                      "أغسطس",
+                      "سبتمبر",
+                      "أكتوبر",
+                      "نوفمبر",
+                      "ديسمبر",
+                  ];
+
+        // CORRECTED: Ensure Sunday is first day for French/Arabic
+        const dayNames =
+            language === "fr"
+                ? ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
+                : [
+                      "الأحد",
+                      "الاثنين",
+                      "الثلاثاء",
+                      "الأربعاء",
+                      "الخميس",
+                      "الجمعة",
+                      "السبت",
+                  ];
+
+        // Helper to get the actual date for debugging
+        const getDebugInfo = () => {
+            const today = new Date();
+            return {
+                today: today.toDateString(),
+                currentMonth: currentMonth.toDateString(),
+                firstDayOfMonth: new Date(
+                    currentMonth.getFullYear(),
+                    currentMonth.getMonth(),
+                    1
+                ).toDateString(),
+                firstDayOfMonthWeekday: new Date(
+                    currentMonth.getFullYear(),
+                    currentMonth.getMonth(),
+                    1
+                ).getDay(),
+                calendarDataLength: calendarData.length,
+                firstFewDays: calendarData.slice(0, 7).map((d) => ({
+                    day: d.day,
+                    date: d.date.toDateString(),
+                    isCurrentMonth: d.isCurrentMonth,
+                })),
+            };
+        };
+
+        console.log("📅 Calendar Debug Info:", getDebugInfo());
+
+        return (
+            <div className="mt-12 px-8 fade-in">
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 shadow-xl rounded-xl p-6 border-4 border-blue-500">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center">
+                            <div className="bg-blue-500 p-3 rounded-lg mr-4">
+                                <svg
+                                    className="w-6 h-6 text-white"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-blue-800 font-montserrat">
+                                📋 {t.responsableTitle}
+                            </h2>
+                        </div>
+
+                        {/* View Toggle */}
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => setCalendarView("month")}
+                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                                    calendarView === "month"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-white text-blue-600 border-2 border-blue-600"
+                                }`}
+                            >
+                                📅 {language === "fr" ? "Calendrier" : "تقويم"}
+                            </button>
+                            <button
+                                onClick={() => setCalendarView("list")}
+                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                                    calendarView === "list"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-white text-blue-600 border-2 border-blue-600"
+                                }`}
+                            >
+                                📋 {language === "fr" ? "Liste" : "قائمة"}
+                            </button>
+                        </div>
+                    </div>
+
+                    {responsableExams.length > 0 ? (
+                        <>
+                            {/* Summary Stats */}
+                            <div className="mb-6 bg-white p-4 rounded-lg border border-blue-300">
+                                <p className="text-lg font-semibold text-blue-700 mb-2">
+                                    {language === "fr" ? "Résumé:" : "ملخص:"}
+                                </p>
+                                <div className="flex flex-wrap gap-4">
+                                    <div className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold">
+                                        📊 Total: {responsableExams.length}
+                                    </div>
+                                    <div className="px-4 py-2 bg-purple-500 text-white rounded-lg font-semibold">
+                                        🎓 Examens:{" "}
+                                        {
+                                            responsableExams.filter(
+                                                (e) => e.type === "examen"
+                                            ).length
+                                        }
+                                    </div>
+                                    <div className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold">
+                                        📝 CC:{" "}
+                                        {
+                                            responsableExams.filter(
+                                                (e) => e.type === "cc"
+                                            ).length
+                                        }
+                                    </div>
+                                    <div className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold">
+                                        🔄 Rattrapages:{" "}
+                                        {
+                                            responsableExams.filter(
+                                                (e) => e.type === "rattrapage"
+                                            ).length
+                                        }
+                                    </div>
+                                </div>
+
+                                {/* Debug info (can be removed in production) */}
+                                <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+                                    <p className="font-mono">
+                                        Debug:{" "}
+                                        {currentMonth.toLocaleDateString(
+                                            "fr-FR",
+                                            { month: "long", year: "numeric" }
+                                        )}
+                                    </p>
+                                    <p className="font-mono">
+                                        Premier jour:{" "}
+                                        {new Date(
+                                            currentMonth.getFullYear(),
+                                            currentMonth.getMonth(),
+                                            1
+                                        ).toLocaleDateString("fr-FR", {
+                                            weekday: "long",
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Calendar View */}
+                            {calendarView === "month" ? (
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    {/* Calendar Navigation */}
+                                    <div className="flex items-center justify-between mb-6">
+                                        <button
+                                            onClick={goToPreviousMonth}
+                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold"
+                                        >
+                                            ←{" "}
+                                            {language === "fr"
+                                                ? "Précédent"
+                                                : "السابق"}
+                                        </button>
+
+                                        <div className="text-center">
+                                            <h3 className="text-2xl font-bold text-blue-800">
+                                                {
+                                                    monthNames[
+                                                        currentMonth.getMonth()
+                                                    ]
+                                                }{" "}
+                                                {currentMonth.getFullYear()}
+                                            </h3>
+                                            <button
+                                                onClick={goToToday}
+                                                className="mt-2 px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-all"
+                                            >
+                                                {language === "fr"
+                                                    ? "Aujourd'hui"
+                                                    : "اليوم"}
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            onClick={goToNextMonth}
+                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold"
+                                        >
+                                            {language === "fr"
+                                                ? "Suivant"
+                                                : "التالي"}{" "}
+                                            →
+                                        </button>
+                                    </div>
+
+                                    {/* Calendar Grid */}
+                                    <div className="grid grid-cols-7 gap-2">
+                                        {/* Day Headers - CORRECTED ORDER */}
+                                        {dayNames.map((day, index) => (
+                                            <div
+                                                key={index}
+                                                className="text-center font-bold text-blue-700 py-2 bg-blue-100 rounded"
+                                            >
+                                                {day}
+                                            </div>
+                                        ))}
+
+                                        {/* Calendar Days */}
+                                        {calendarData.map((dayData, index) => {
+                                            const isToday =
+                                                dayData.date.toDateString() ===
+                                                new Date().toDateString();
+                                            const hasExams =
+                                                dayData.exams.length > 0;
+
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className={`min-h-[100px] border-2 rounded-lg p-2 transition-all cursor-pointer ${
+                                                        !dayData.isCurrentMonth
+                                                            ? "bg-gray-100 text-gray-400"
+                                                            : isToday
+                                                            ? "bg-yellow-100 border-yellow-500"
+                                                            : hasExams
+                                                            ? "bg-blue-50 border-blue-300 hover:bg-blue-100"
+                                                            : "bg-white border-gray-300 hover:bg-gray-50"
+                                                    }`}
+                                                    onClick={() =>
+                                                        hasExams &&
+                                                        setSelectedDate(
+                                                            dayData.date
+                                                        )
+                                                    }
+                                                >
+                                                    <div
+                                                        className={`text-sm font-semibold mb-1 ${
+                                                            isToday
+                                                                ? "text-yellow-800"
+                                                                : ""
+                                                        }`}
+                                                    >
+                                                        {dayData.day}
+                                                        {isToday && (
+                                                            <span className="ml-1 text-xs">
+                                                                (Aujourd'hui)
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Exam indicators */}
+                                                    {hasExams && (
+                                                        <div className="space-y-1">
+                                                            {dayData.exams
+                                                                .slice(0, 3)
+                                                                .map(
+                                                                    (
+                                                                        exam,
+                                                                        examIndex
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                examIndex
+                                                                            }
+                                                                            className={`text-xs p-1 rounded truncate ${
+                                                                                exam.type ===
+                                                                                "cc"
+                                                                                    ? "bg-green-500 text-white"
+                                                                                    : exam.type ===
+                                                                                      "examen"
+                                                                                    ? "bg-purple-500 text-white"
+                                                                                    : "bg-orange-500 text-white"
+                                                                            }`}
+                                                                            title={`${exam.module} - ${exam.start_time}`}
+                                                                        >
+                                                                            {
+                                                                                exam.start_time
+                                                                            }{" "}
+                                                                            {exam.module.substring(
+                                                                                0,
+                                                                                10
+                                                                            )}
+                                                                            ...
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                            {dayData.exams
+                                                                .length > 3 && (
+                                                                <div className="text-xs text-blue-600 font-semibold">
+                                                                    +
+                                                                    {dayData
+                                                                        .exams
+                                                                        .length -
+                                                                        3}{" "}
+                                                                    {language ===
+                                                                    "fr"
+                                                                        ? "autre(s)"
+                                                                        : "آخر"}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Selected Date Details */}
+                                    {selectedDate && (
+                                        <div className="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="text-lg font-bold text-blue-800">
+                                                    📅{" "}
+                                                    {selectedDate.toLocaleDateString(
+                                                        language === "ar"
+                                                            ? "ar-DZ"
+                                                            : "fr-FR",
+                                                        {
+                                                            weekday: "long",
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        }
+                                                    )}
+                                                </h4>
+                                                <button
+                                                    onClick={() =>
+                                                        setSelectedDate(null)
+                                                    }
+                                                    className="text-red-600 hover:text-red-800 font-bold"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+
+                                            {calendarData
+                                                .find(
+                                                    (d) =>
+                                                        d.date.toDateString() ===
+                                                        selectedDate.toDateString()
+                                                )
+                                                ?.exams.map((exam, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="mb-3 p-3 bg-white rounded border-l-4 border-blue-500"
+                                                    >
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <p className="font-bold text-blue-800">
+                                                                    {
+                                                                        exam.module
+                                                                    }
+                                                                </p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    ⏰{" "}
+                                                                    {
+                                                                        exam.start_time
+                                                                    }{" "}
+                                                                    -{" "}
+                                                                    {
+                                                                        exam.end_time
+                                                                    }{" "}
+                                                                    | 🏢{" "}
+                                                                    {exam.room}{" "}
+                                                                    | 👥{" "}
+                                                                    {
+                                                                        exam.niveau
+                                                                    }
+                                                                    /
+                                                                    {exam.group}
+                                                                </p>
+                                                                <p className="text-sm">
+                                                                    <span
+                                                                        className={`px-2 py-1 rounded text-white ${
+                                                                            exam.type ===
+                                                                            "cc"
+                                                                                ? "bg-green-500"
+                                                                                : exam.type ===
+                                                                                  "examen"
+                                                                                ? "bg-purple-500"
+                                                                                : "bg-orange-500"
+                                                                        }`}
+                                                                    >
+                                                                        {getExamTypeLabel(
+                                                                            exam.type
+                                                                        )}
+                                                                    </span>
+                                                                </p>
+                                                                {exam.teacher && (
+                                                                    <p className="text-sm mt-1">
+                                                                        👤
+                                                                        Surveillant:{" "}
+                                                                        <span className="font-semibold">
+                                                                            {
+                                                                                exam.teacher
+                                                                            }
+                                                                        </span>
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleOpenClaimModal(
+                                                                        exam
+                                                                    )
+                                                                }
+                                                                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                                                            >
+                                                                🚨 {t.report}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    )}
+
+                                    {/* Legend */}
+                                    <div className="mt-6 flex flex-wrap gap-4 justify-center">
+                                        <div className="flex items-center">
+                                            <div className="w-3 h-3 bg-blue-50 border border-blue-300 mr-2"></div>
+                                            <span className="text-sm">
+                                                Avec examens
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <div className="w-3 h-3 bg-yellow-100 border border-yellow-500 mr-2"></div>
+                                            <span className="text-sm">
+                                                Aujourd'hui
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <div className="w-3 h-3 bg-green-500 mr-2"></div>
+                                            <span className="text-sm">CC</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <div className="w-3 h-3 bg-purple-500 mr-2"></div>
+                                            <span className="text-sm">
+                                                Examens
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <div className="w-3 h-3 bg-orange-500 mr-2"></div>
+                                            <span className="text-sm">
+                                                Rattrapages
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* List View (Original Table) */
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full bg-white border-2 border-blue-300 rounded-lg shadow-lg">
+                                        <thead className="bg-blue-600 text-white">
+                                            <tr>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Type
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Module
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Semestre
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Niveau/Groupe
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Salle
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Date
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Horaire
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    {t.surveillant}
+                                                </th>
+                                                <th className="px-6 py-4 text-left font-bold">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {responsableExams.map(
+                                                (exam, index) => (
+                                                    <tr
+                                                        key={exam.id || index}
+                                                        className={`${
+                                                            index % 2 === 0
+                                                                ? "bg-blue-50"
+                                                                : "bg-white"
+                                                        } hover:bg-blue-100 transition-colors`}
+                                                    >
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            <span
+                                                                className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                                                    exam.type ===
+                                                                    "cc"
+                                                                        ? "bg-blue-100 text-blue-800 border border-blue-300"
+                                                                        : exam.type ===
+                                                                          "examen"
+                                                                        ? "bg-purple-100 text-purple-800 border border-purple-300"
+                                                                        : "bg-orange-100 text-orange-800 border border-orange-300"
+                                                                }`}
+                                                            >
+                                                                {getExamTypeLabel(
+                                                                    exam.type
+                                                                )}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200 font-bold text-blue-800">
+                                                            {exam.module}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            {exam.semester ||
+                                                                "-"}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            {exam.niveau}/
+                                                            {exam.group}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200 font-semibold">
+                                                            {exam.room}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            {new Date(
+                                                                exam.date
+                                                            ).toLocaleDateString(
+                                                                language ===
+                                                                    "ar"
+                                                                    ? "ar-DZ"
+                                                                    : "fr-FR",
+                                                                {
+                                                                    weekday:
+                                                                        "short",
+                                                                    day: "numeric",
+                                                                    month: "short",
+                                                                    year: "numeric",
+                                                                }
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            ⏰ {exam.start_time}{" "}
+                                                            - {exam.end_time}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            {exam.teacher ? (
+                                                                <span className="text-green-600 font-semibold">
+                                                                    👤{" "}
+                                                                    {
+                                                                        exam.teacher
+                                                                    }
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-red-500 font-semibold">
+                                                                    ❌{" "}
+                                                                    {
+                                                                        t.notAssigned
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-3 border-b border-blue-200">
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleOpenClaimModal(
+                                                                        exam
+                                                                    )
+                                                                }
+                                                                className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all font-semibold shadow-md"
+                                                            >
+                                                                🚨 {t.report}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            <div className="mt-6 flex justify-end">
+                                <button
+                                    onClick={exportResponsableToPDF}
+                                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-montserrat font-bold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center space-x-2"
+                                >
+                                    <svg
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                    </svg>
+                                    <span>
+                                        📥 Exporter les examens responsables
+                                    </span>
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-12">
+                            <svg
+                                className="w-20 h-20 mx-auto mb-4 text-blue-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                            <p className="text-xl font-montserrat text-gray-600">
+                                {language === "fr"
+                                    ? "Aucun examen trouvé pour les modules dont vous êtes responsable"
+                                    : "لا توجد امتحانات للمواد التي تشرف عليها"}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-2">
+                                {language === "fr"
+                                    ? "Vérifiez que vous êtes bien désigné comme responsable de module dans le système"
+                                    : "تحقق من أنك مسجل كمسؤول عن المواد في النظام"}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
     /* ================= LOADING & ERROR STATES ================= */
     if (loading) {
         return (
@@ -739,7 +1610,6 @@ export default function EspaceEnseignants() {
             }`}
         >
             <div className="flex-grow relative">
-                {/* Header */}
                 <img
                     src={uniLogo}
                     alt="UABT Logo"
@@ -750,7 +1620,6 @@ export default function EspaceEnseignants() {
                     {t.department}
                 </h1>
 
-                {/* Notification Bell - Add this before logout icon */}
                 {teacherData && (
                     <div
                         className="absolute top-4 right-20"
@@ -791,7 +1660,7 @@ export default function EspaceEnseignants() {
                     </p>
                 </div>
 
-                {/* Navigation Tabs */}
+                {/* Navigation Tabs - 3 BUTTONS */}
                 <div className="flex justify-center mt-8 space-x-4 fade-in">
                     <button
                         onClick={() => setCurrentView("schedule")}
@@ -802,6 +1671,16 @@ export default function EspaceEnseignants() {
                         }`}
                     >
                         {t.examSchedule}
+                    </button>
+                    <button
+                        onClick={() => setCurrentView("responsable")}
+                        className={`px-8 py-3 rounded-lg font-montserrat font-semibold transition-all hover-scale ${
+                            currentView === "responsable"
+                                ? "bg-[#3A5377] text-white shadow-lg"
+                                : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
+                        }`}
+                    >
+                        {t.responsableExams}
                     </button>
                     <button
                         onClick={() => setCurrentView("profile")}
@@ -815,11 +1694,16 @@ export default function EspaceEnseignants() {
                     </button>
                 </div>
 
-                {/* Content */}
-                {currentView === "profile" ? <ProfileView /> : <ScheduleView />}
+                {/* Content - 3 VIEWS */}
+                {currentView === "profile" ? (
+                    <ProfileView />
+                ) : currentView === "responsable" ? (
+                    <ResponsableView />
+                ) : (
+                    <ScheduleView />
+                )}
             </div>
 
-            {/* Footer */}
             <footer className="bg-white border-t border-[#768FA6] mt-auto fade-in">
                 <div className="px-8 py-8">
                     <div className="text-center">
@@ -830,7 +1714,6 @@ export default function EspaceEnseignants() {
                 </div>
             </footer>
 
-            {/* Claim Modal */}
             <Modal
                 isOpen={showClaimModal}
                 onClose={() => setShowClaimModal(false)}

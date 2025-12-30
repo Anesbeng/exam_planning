@@ -32,6 +32,7 @@ const ModuleManagement = () => {
     /* ================= FETCH MODULES ================= */
     useEffect(() => {
         fetchModules();
+        fetchTeachers();
     }, []);
 
     const fetchModules = async () => {
@@ -50,12 +51,25 @@ const ModuleManagement = () => {
             setTeachers(res.data.teachers || []);
         } catch (err) {
             console.error("Fetch teachers error:", err);
+            try {
+                const res = await api.get("/teachers");
+                setTeachers(res.data.teachers || []);
+            } catch (err2) {
+                console.error("Fetch teachers fallback error:", err2);
+                setTeachers([]);
+            }
         }
+    };
+
+    /* ================= HELPER FUNCTION ================= */
+    // Get teacher name by matricule for display
+    const getTeacherName = (matricule) => {
+        const teacher = teachers.find((t) => t.matricule === matricule);
+        return teacher ? teacher.name : matricule;
     };
 
     /* ================= ADD MODULE ================= */
     const handleAddClick = () => {
-        fetchTeachers();
         setShowAddModal(true);
     };
 
@@ -75,7 +89,7 @@ const ModuleManagement = () => {
                 name: newModule.name,
                 code: newModule.code,
                 semester: newModule.semester,
-                teacher_responsible: newModule.teacher_responsible,
+                teacher_responsible: newModule.teacher_responsible, // Send matricule
             });
 
             setShowAddModal(false);
@@ -84,20 +98,22 @@ const ModuleManagement = () => {
             alert("Module créé avec succès!");
         } catch (err) {
             console.error("Create module error:", err);
-            alert("Erreur lors de la création du module");
+            alert(
+                err.response?.data?.message ||
+                    "Erreur lors de la création du module"
+            );
         }
     };
 
     /* ================= EDIT MODULE ================= */
-    const handleEditClick = async (module) => {
+    const handleEditClick = (module) => {
         setSelectedModule(module);
         setEditModule({
             code: module.code,
             name: module.name,
             semester: module.semester,
-            teacher_responsible: module.teacher_responsible,
+            teacher_responsible: module.teacher_responsible, // This is matricule
         });
-        await fetchTeachers();
         setShowEditModal(true);
     };
 
@@ -117,7 +133,7 @@ const ModuleManagement = () => {
                 name: editModule.name,
                 code: editModule.code,
                 semester: editModule.semester,
-                teacher_responsible: editModule.teacher_responsible,
+                teacher_responsible: editModule.teacher_responsible, // Send matricule
             });
 
             setShowEditModal(false);
@@ -126,7 +142,10 @@ const ModuleManagement = () => {
             alert("Module modifié avec succès!");
         } catch (err) {
             console.error("Update module error:", err);
-            alert("Erreur lors de la modification du module");
+            alert(
+                err.response?.data?.message ||
+                    "Erreur lors de la modification du module"
+            );
         }
     };
 
@@ -251,7 +270,11 @@ const ModuleManagement = () => {
                                     <td>{module.code}</td>
                                     <td>{module.name}</td>
                                     <td>{module.semester}</td>
-                                    <td>{module.teacher_responsible}</td>
+                                    <td>
+                                        {/* Display teacher name if available, otherwise matricule */}
+                                        {module.teacher_name ||
+                                            module.teacher_responsible}
+                                    </td>
                                     <td>
                                         <div className="action-buttons">
                                             <button
@@ -351,41 +374,27 @@ const ModuleManagement = () => {
                         </div>
                         <div className="form-group">
                             <label>Enseignant Responsable *</label>
-                            {teachers.length > 0 ? (
-                                <select
-                                    value={newModule.teacher_responsible}
-                                    onChange={(e) =>
-                                        setNewModule({
-                                            ...newModule,
-                                            teacher_responsible: e.target.value,
-                                        })
-                                    }
-                                >
-                                    <option value="">
-                                        Sélectionner un enseignant
+                            <select
+                                value={newModule.teacher_responsible}
+                                onChange={(e) =>
+                                    setNewModule({
+                                        ...newModule,
+                                        teacher_responsible: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="">
+                                    Sélectionner un enseignant
+                                </option>
+                                {teachers.map((teacher) => (
+                                    <option
+                                        key={teacher.id}
+                                        value={teacher.matricule}
+                                    >
+                                        {teacher.name} ({teacher.matricule})
                                     </option>
-                                    {teachers.map((teacher) => (
-                                        <option
-                                            key={teacher.id}
-                                            value={teacher.name}
-                                        >
-                                            {teacher.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input
-                                    type="text"
-                                    value={newModule.teacher_responsible}
-                                    onChange={(e) =>
-                                        setNewModule({
-                                            ...newModule,
-                                            teacher_responsible: e.target.value,
-                                        })
-                                    }
-                                    placeholder="Nom de l'enseignant"
-                                />
-                            )}
+                                ))}
+                            </select>
                         </div>
                     </div>
 
@@ -473,41 +482,27 @@ const ModuleManagement = () => {
                         </div>
                         <div className="form-group">
                             <label>Enseignant Responsable *</label>
-                            {teachers.length > 0 ? (
-                                <select
-                                    value={editModule.teacher_responsible}
-                                    onChange={(e) =>
-                                        setEditModule({
-                                            ...editModule,
-                                            teacher_responsible: e.target.value,
-                                        })
-                                    }
-                                >
-                                    <option value="">
-                                        Sélectionner un enseignant
+                            <select
+                                value={editModule.teacher_responsible}
+                                onChange={(e) =>
+                                    setEditModule({
+                                        ...editModule,
+                                        teacher_responsible: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="">
+                                    Sélectionner un enseignant
+                                </option>
+                                {teachers.map((teacher) => (
+                                    <option
+                                        key={teacher.id}
+                                        value={teacher.matricule}
+                                    >
+                                        {teacher.name} ({teacher.matricule})
                                     </option>
-                                    {teachers.map((teacher) => (
-                                        <option
-                                            key={teacher.id}
-                                            value={teacher.name}
-                                        >
-                                            {teacher.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input
-                                    type="text"
-                                    value={editModule.teacher_responsible}
-                                    onChange={(e) =>
-                                        setEditModule({
-                                            ...editModule,
-                                            teacher_responsible: e.target.value,
-                                        })
-                                    }
-                                    placeholder="Nom de l'enseignant"
-                                />
-                            )}
+                                ))}
+                            </select>
                         </div>
                     </div>
 
@@ -603,7 +598,9 @@ const ModuleManagement = () => {
                                 <strong>Semestre</strong> (S1, S2, etc.)
                             </li>
                             <li>
-                                <strong>Enseignant responsable</strong>
+                                <strong>
+                                    Matricule de l'enseignant responsable
+                                </strong>
                             </li>
                         </ol>
                         <p>Formats acceptés: CSV, XLS, XLSX</p>

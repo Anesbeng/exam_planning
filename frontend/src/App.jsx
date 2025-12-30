@@ -15,6 +15,7 @@ import ExamManagement from "./pages/Admin/ExamManagement";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ClaimsManagement from "./pages/ClaimsManagement";
+import Summary from "./pages/Summary"; // or wherever your Summary component is located
 
 // Other dashboards
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -53,8 +54,8 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* Login */}
                 <Route path="/" element={<Login />} />
+                <Route path="/summary" element={<Summary />} />
 
                 {/* ADMIN ROUTES WITH LAYOUT */}
                 <Route
