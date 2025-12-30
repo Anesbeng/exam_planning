@@ -1,0 +1,250 @@
+.notification-bell-container {
+    position: relative;
+}
+
+.notification-bell-button {
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.notification-bell-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+}
+
+.bell-icon {
+    width: 24px;
+    height: 24px;
+    color: #0b2844;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.notification-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: 998;
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 380px;
+    max-height: 500px;
+    background: white;
+    border: 2px solid #3a5377;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 2px solid #eef2f8;
+}
+
+.notification-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0b2844;
+    font-family: "Montserrat", sans-serif;
+}
+
+.mark-all-read {
+    background: transparent;
+    border: none;
+    color: #3a5377;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: "Montserrat", sans-serif;
+}
+
+.mark-all-read:hover {
+    background-color: #eef2f8;
+    color: #0b2844;
+}
+
+.notification-list {
+    overflow-y: auto;
+    max-height: 420px;
+    padding: 8px;
+}
+
+.notification-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: #3a5377;
+    border-radius: 10px;
+}
+
+.no-notifications {
+    padding: 40px 20px;
+    text-align: center;
+    color: #768fa6;
+}
+
+.no-notifications p {
+    margin: 0;
+    font-family: "Montserrat", sans-serif;
+}
+
+.notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+    background: white;
+    border: 1px solid transparent;
+}
+
+.notification-item:hover {
+    background-color: #f8fafc;
+    border-color: #eef2f8;
+}
+
+.notification-item.unread {
+    background-color: #eef7ff;
+    border-color: #3a5377;
+}
+
+.notification-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-message {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #0b2844;
+    line-height: 1.4;
+    font-family: "Montserrat", sans-serif;
+}
+
+.notification-exam-details {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #768fa6;
+    font-family: "Montserrat", sans-serif;
+}
+
+.notification-time {
+    font-size: 11px;
+    color: #768fa6;
+    font-family: "Montserrat", sans-serif;
+}
+
+.notification-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.mark-read-btn,
+.delete-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    color: #768fa6;
+}
+
+.mark-read-btn:hover {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.delete-btn:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .notification-dropdown {
+        width: calc(100vw - 32px);
+        right: -100px;
+    }
+}

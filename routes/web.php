@@ -14,6 +14,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\ImportmodulesController;
 
+
 Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::resource('teachers', TeacherController::class);

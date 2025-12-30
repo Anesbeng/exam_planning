@@ -3,191 +3,196 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exam;
-use App\Models\Module;
-use App\Models\Salle;
-use Illuminate\Http\Request;
 use App\Models\Notification;
-use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class ExamController extends Controller
 {
-    public function index()
-    {
-        return response()->json([
-            'exams' => Exam::where('type', 'examen')->get(),
-            'ccs' => Exam::where('type', 'cc')->get(),
-            'rattrapages' => Exam::where('type', 'rattrapage')->get(),
-        ]);
-    }
-
+    /**
+     * Create a new exam and send notification to teacher
+     */
     public function store(Request $request)
     {
-        // Validate that the room is available for the requested date/time
-        if ($request->room && $request->date && $request->start_time && $request->end_time) {
-            $conflict = Exam::where('date', $request->date)
-                ->where('room', $request->room)
-                ->where('start_time', '<', $request->end_time)
-                ->where('end_time', '>', $request->start_time)
-                ->exists();
+        try {
+            $validated = $request->validate([
+                'type' => 'required|in:examen,cc,rattrapage',
+                'module' => 'required|string',
+                'teacher' => 'required|string',
+                'room' => 'required|string',
+                'specialite' => 'required|string',
+                'niveau' => 'required|string',
+                'group' => 'required|string',
+                'semester' => 'required|string',
+                'date' => 'required|date',
+                'start_time' => 'required',
+                'end_time' => 'required',
+            ]);
 
-            if ($conflict) {
-                return response()->json([
-                    'message' => 'Room is already taken for that time'
-                ], 422);
+            // Create the exam
+            $exam = Exam::create($validated);
+
+            // Find teacher by name to get matricule
+            $teacher = User::where('name', $validated['teacher'])
+                          ->where('role', 'teacher')
+                          ->first();
+
+            // Send notification to teacher
+            if ($teacher) {
+                $this->sendExamNotification($teacher->matricule, $exam, 'created');
             }
+
+            return response()->json([
+                'message' => 'Exam created successfully',
+                'exam' => $exam
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error creating exam',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Create the exam
-        $exam = Exam::create([
-            'type' => $request->type,
-            'module' => $request->module,
-            'teacher' => $request->teacher,
-            'room' => $request->room,
-            'niveau' => $request->niveau,
-            'group' => $request->group,
-            'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'specialite' => $request->specialite,
-            'semester' => $request->semester,
-        ]);
-
-        // ✅ CREATE NOTIFICATION AFTER EXAM IS CREATED
-        $this->createExamNotification($exam, $request->type, $request->teacher);
-
-        return response()->json([
-            'message' => 'Exam created successfully',
-            'exam' => $exam
-        ]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $exam = Exam::findOrFail($id);
-
-        // Validate that the room is available (exclude current exam)
-        if ($request->room && $request->date && $request->start_time && $request->end_time) {
-            $conflict = Exam::where('date', $request->date)
-                ->where('room', $request->room)
-                ->where('id', '!=', $id)
-                ->where('start_time', '<', $request->end_time)
-                ->where('end_time', '>', $request->start_time)
-                ->exists();
-
-            if ($conflict) {
-                return response()->json([
-                    'message' => 'Room is already taken for that time'
-                ], 422);
-            }
-        }
-
-        // Update the exam
-        $exam->update([
-            'type' => $request->type,
-            'module' => $request->module,
-            'teacher' => $request->teacher,
-            'room' => $request->room,
-            'niveau' => $request->niveau,
-            'group' => $request->group,
-            'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'specialite' => $request->specialite,
-            'semester' => $request->semester,
-        ]);
-
-        // ✅ CREATE NOTIFICATION AFTER EXAM IS UPDATED
-        $this->createExamNotification($exam, $request->type, $request->teacher);
-
-        return response()->json([
-            'message' => 'Exam updated successfully',
-            'exam' => $exam
-        ]);
-    }
-
-    
-/**
- * Get all exams assigned to a specific teacher, grouped by type
- */
-public function getTeacherExams(Request $request)
-{
-    $matricule = $request->query('matricule');
-
-    if (!$matricule) {
-        return response()->json(['message' => 'Matricule is required'], 400);
-    }
-
-    // Fetch exams where the teacher field matches the matricule
-    $teacherExams = Exam::where('teacher', $matricule)->get();
-
-    // Group them correctly for the frontend
-    $exams = $teacherExams->where('type', 'examen')->values();
-    $cc = $teacherExams->where('type', 'cc')->values();
-    $rattrapage = $teacherExams->where('type', 'rattrapage')->values();
-
-    return response()->json([
-        'exams' => $exams,
-        'cc' => $cc,
-        'rattrapage' => $rattrapage,
-    ]);
-}
-
-    public function destroy($id)
-    {
-        Exam::findOrFail($id)->delete();
-
-        return response()->json([
-            'message' => 'Exam deleted successfully'
-        ]);
     }
 
     /**
-     * ✅ Create a notification for the teacher about the exam
-     * This method is now properly called in store() and update()
+     * Update an exam and send notification to teacher
      */
-    private function createExamNotification($exam, $type, $teacherMatricule)
+    public function update(Request $request, $id)
     {
-        if (!$teacherMatricule) {
-            return;
+        try {
+            $exam = Exam::findOrFail($id);
+            
+            $validated = $request->validate([
+                'type' => 'required|in:examen,cc,rattrapage',
+                'module' => 'required|string',
+                'teacher' => 'required|string',
+                'room' => 'required|string',
+                'specialite' => 'required|string',
+                'niveau' => 'required|string',
+                'group' => 'required|string',
+                'semester' => 'required|string',
+                'date' => 'required|date',
+                'start_time' => 'required',
+                'end_time' => 'required',
+            ]);
+
+            // Check if teacher changed
+            $oldTeacher = $exam->teacher;
+            
+            $exam->update($validated);
+
+            // Find new teacher by name
+            $teacher = User::where('name', $validated['teacher'])
+                          ->where('role', 'teacher')
+                          ->first();
+
+            // Send notification to new teacher
+            if ($teacher) {
+                $this->sendExamNotification($teacher->matricule, $exam, 'updated');
+            }
+
+            // If teacher changed, notify old teacher about removal
+            if ($oldTeacher !== $validated['teacher']) {
+                $oldTeacherUser = User::where('name', $oldTeacher)
+                                     ->where('role', 'teacher')
+                                     ->first();
+                if ($oldTeacherUser) {
+                    $this->sendExamNotification($oldTeacherUser->matricule, $exam, 'removed');
+                }
+            }
+
+            return response()->json([
+                'message' => 'Exam updated successfully',
+                'exam' => $exam
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error updating exam',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
+
+    /**
+     * Delete an exam and send notification to teacher
+     */
+    public function destroy($id)
+    {
+        try {
+            $exam = Exam::findOrFail($id);
+            
+            // Find teacher before deleting
+            $teacher = User::where('name', $exam->teacher)
+                          ->where('role', 'teacher')
+                          ->first();
+
+            // Send notification before deletion
+            if ($teacher) {
+                $this->sendExamNotification($teacher->matricule, $exam, 'deleted');
+            }
+
+            $exam->delete();
+
+            return response()->json([
+                'message' => 'Exam deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error deleting exam',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper function to send notifications to teachers
+     */
+    private function sendExamNotification($teacherMatricule, $exam, $action)
+    {
+        $messages = [
+            'created' => "Nouvel examen ajouté : {$exam->module} le {$exam->date} à {$exam->start_time}",
+            'updated' => "Examen modifié : {$exam->module} le {$exam->date} à {$exam->start_time}",
+            'deleted' => "Examen supprimé : {$exam->module} qui était prévu le {$exam->date}",
+            'removed' => "Vous avez été retiré de l'examen : {$exam->module}"
+        ];
 
         try {
-            $examDate = date('d/m/Y', strtotime($exam->date));
-            
-            // ✅ Map exam type correctly for the database enum
-            $examTypeForDb = $this->mapExamType($type);
-            
-            $message = "Un nouvel examen a été planifié pour le module {$exam->module} " .
-                       "le {$examDate} de {$exam->start_time} à {$exam->end_time} " .
-                       "en salle {$exam->room}.";
-
             Notification::create([
                 'teacher_matricule' => $teacherMatricule,
                 'exam_id' => $exam->id,
-                'exam_type' => $examTypeForDb,
-                'message' => $message
+                'exam_type' => $exam->type,
+                'message' => $messages[$action] ?? "Notification d'examen",
+                'is_read' => false
             ]);
         } catch (\Exception $e) {
-            // Log the error but don't fail the exam creation
-            Log::error('Failed to create notification: ' . $e->getMessage());
+            // Log error but don't fail the main operation
+            \Log::error("Failed to create notification: " . $e->getMessage());
         }
     }
 
     /**
-     * ✅ Map the exam type to match database enum values
-     * Handles: 'examen' -> 'exam', 'cc' -> 'cc', 'rattrapage' -> 'rattrapage'
+     * Get all exams
      */
-    private function mapExamType($type)
+    public function index()
     {
-        $typeMap = [
-            'examen' => 'exam',
-            'exam' => 'exam',
-            'cc' => 'cc',
-            'rattrapage' => 'rattrapage',
-        ];
+        try {
+            $exams = Exam::where('type', 'examen')->orderBy('date')->get();
+            $ccs = Exam::where('type', 'cc')->orderBy('date')->get();
+            $rattrapages = Exam::where('type', 'rattrapage')->orderBy('date')->get();
 
-        return $typeMap[strtolower($type)] ?? 'exam';
+            return response()->json([
+                'exams' => $exams,
+                'ccs' => $ccs,
+                'rattrapages' => $rattrapages
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error fetching exams',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
-
-

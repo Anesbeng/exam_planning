@@ -24,7 +24,14 @@ class Notification extends Model
         'updated_at' => 'datetime',
     ];
 
-    // Relationship with user (teacher)
+    public function exam()
+    {
+        return $this->belongsTo(Exam::class, 'exam_id');
+    }
+
+    /**
+     * Relationship with Teacher (User)
+     */
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_matricule', 'matricule');

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Modal from "./UI/Modal";
+import NotificationBell from "./NotificationBell";
 import logoutIcon from "./logout.png";
 import uniLogo from "./logouni.png";
 import jsPDF from "jspdf";
@@ -14,18 +15,17 @@ export default function EspaceEnseignants() {
 
     /* ================= STATES ================= */
     const [teacherData, setTeacherData] = useState(null);
-    const [exams, setExams] = useState([]);
-    const [cc, setCc] = useState([]);
-    const [rattrapage, setRattrapage] = useState([]);
-    const [teacherSemesters, setTeacherSemesters] = useState([]);
-
-    const [activeSemester, setActiveSemester] = useState(null);
-    const [selectedExamType, setSelectedExamType] = useState(null);
+    const [allExams, setAllExams] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentView, setCurrentView] = useState("schedule");
     const [language, setLanguage] = useState("fr");
+
+    // Filter states
+    const [selectedExamType, setSelectedExamType] = useState("ALL"); // ALL, CC, EXAM, RATT
+    const [selectedSemester, setSelectedSemester] = useState("ALL");
+    const [searchTerm, setSearchTerm] = useState("");
 
     /* ================= CLAIM STATES ================= */
     const [showClaimModal, setShowClaimModal] = useState(false);
@@ -48,13 +48,12 @@ export default function EspaceEnseignants() {
             specialty: "Spécialité",
             level: "Niveau",
             group: "Groupe",
-            semesters: "Mes Semestres :",
-            teacherName: "Nom Enseignant :",
             module: "Module",
             levelGroup: "Niveau/Groupe",
             room: "Salle",
             date: "Date",
             schedule: "Horaire",
+            semester: "Semestre",
             close: "Fermer",
             report: "Signaler",
             export: "Exporter PDF",
@@ -62,11 +61,11 @@ export default function EspaceEnseignants() {
             error: "Erreur:",
             retry: "Réessayer",
             noExam: "Aucun examen planifié",
+            all: "TOUS",
             cc: "CONTRÔLE CONTINU",
             exam: "EXAMENS",
             ratt: "RATTRAPAGES",
             reportExam: "Signaler un examen",
-            selectExam: "Sélectionnez l'examen :",
             reason: "Message :",
             reasonPlaceholder: "Expliquez la raison de votre réclamation...",
             cancel: "Annuler",
@@ -76,6 +75,12 @@ export default function EspaceEnseignants() {
             university: "Université Abou Bekr Belkaïd - Tlemcen",
             copyright:
                 "Copyright © 2026 Université Abou Bekr Belkaïd Tlemcen. Tous droits réservés.",
+            filterByType: "Filtrer par type :",
+            filterBySemester: "Filtrer par semestre :",
+            search: "Rechercher...",
+            totalExams: "Total des examens",
+            type: "Type",
+            allSemesters: "Tous les semestres",
         },
         ar: {
             department: "قسم الإعلام الآلي",
@@ -90,13 +95,12 @@ export default function EspaceEnseignants() {
             specialty: "التخصص",
             level: "المستوى",
             group: "المجموعة",
-            semesters: "سداسياتي :",
-            teacherName: "اسم الأستاذ:",
             module: "المقياس",
             levelGroup: "المستوى/المجموعة",
             room: "القاعة",
             date: "التاريخ",
             schedule: "التوقيت",
+            semester: "السداسي",
             close: "إغلاق",
             report: "إبلاغ",
             export: "تصدير PDF",
@@ -104,11 +108,11 @@ export default function EspaceEnseignants() {
             error: "خطأ:",
             retry: "إعادة المحاولة",
             noExam: "لا توجد امتحانات",
+            all: "الكل",
             cc: "المراقبة المستمرة",
             exam: "الامتحانات",
             ratt: "الاستدراك",
             reportExam: "إبلاغ عن امتحان",
-            selectExam: "اختر الامتحان:",
             reason: "الرسالة :",
             reasonPlaceholder: "اشرح سبب إبلاغك...",
             cancel: "إلغاء",
@@ -118,6 +122,12 @@ export default function EspaceEnseignants() {
             university: "جامعة أبو بكر بلقايد - تلمسان",
             copyright:
                 "حقوق النشر © 2026 جامعة أبو بكر بلقايد تلمسان. جميع الحقوق محفوظة.",
+            filterByType: "تصفية حسب النوع :",
+            filterBySemester: "تصفية حسب السداسي :",
+            search: "بحث...",
+            totalExams: "إجمالي الامتحانات",
+            type: "النوع",
+            allSemesters: "جميع السداسيات",
         },
     };
 
@@ -129,43 +139,34 @@ export default function EspaceEnseignants() {
             setLoading(true);
             setError(null);
 
-            // Fetch teacher's exams using the correct endpoint
             const examResponse = await api.get(
                 `/teacher/exams?matricule=${matricule}`
             );
             const examData = examResponse.data;
 
-            // Set teacher data
             setTeacherData(examData.teacher);
-            setExams(examData.exams || []);
-            setCc(examData.cc || []);
-            setRattrapage(examData.rattrapage || []);
 
-            // Extract unique semesters from teacher's exams
-            const allTeacherExams = [
-                ...(examData.exams || []),
-                ...(examData.cc || []),
-                ...(examData.rattrapage || []),
+            // Combine all exams into one array with type property
+            const combinedExams = [
+                ...(examData.exams || []).map((exam) => ({
+                    ...exam,
+                    type: "examen",
+                })),
+                ...(examData.cc || []).map((exam) => ({ ...exam, type: "cc" })),
+                ...(examData.rattrapage || []).map((exam) => ({
+                    ...exam,
+                    type: "rattrapage",
+                })),
             ];
 
-            // Get unique semester names
-            const uniqueSemesterNames = [
-                ...new Set(
-                    allTeacherExams
-                        .filter((exam) => exam.semester)
-                        .map((exam) => exam.semester)
-                ),
-            ];
+            // Sort by date and time
+            combinedExams.sort((a, b) => {
+                const dateCompare = new Date(a.date) - new Date(b.date);
+                if (dateCompare !== 0) return dateCompare;
+                return a.start_time.localeCompare(b.start_time);
+            });
 
-            // Create semester objects with name and id
-            const teacherSemestersData = uniqueSemesterNames.map(
-                (name, index) => ({
-                    id: index + 1,
-                    name: name,
-                })
-            );
-
-            setTeacherSemesters(teacherSemestersData);
+            setAllExams(combinedExams);
         } catch (err) {
             setError(
                 err.response?.data?.message ||
@@ -187,66 +188,116 @@ export default function EspaceEnseignants() {
         fetchTeacherData(user.matricule);
     }, [navigate]);
 
-    /* ================= FILTER HELPERS ================= */
-    const filterBySemester = (list, semesterName) => {
-        if (!list) return [];
-        return list.filter((exam) => exam.semester === semesterName);
+    /* ================= FILTER LOGIC ================= */
+    const getUniqueSemesters = () => {
+        const semesters = [
+            ...new Set(allExams.map((exam) => exam.semester).filter(Boolean)),
+        ];
+        return semesters.sort();
     };
 
-    const getCurrentList = () => {
-        if (!activeSemester || !selectedExamType) return [];
+    const getFilteredExams = () => {
+        let filtered = allExams;
 
-        if (selectedExamType === "CC")
-            return filterBySemester(cc, activeSemester.name);
-        if (selectedExamType === "EXAM")
-            return filterBySemester(exams, activeSemester.name);
-        if (selectedExamType === "RATT")
-            return filterBySemester(rattrapage, activeSemester.name);
-        return [];
+        // Filter by type
+        if (selectedExamType !== "ALL") {
+            const typeMap = {
+                CC: "cc",
+                EXAM: "examen",
+                RATT: "rattrapage",
+            };
+            filtered = filtered.filter(
+                (exam) => exam.type === typeMap[selectedExamType]
+            );
+        }
+
+        // Filter by semester
+        if (selectedSemester !== "ALL") {
+            filtered = filtered.filter(
+                (exam) => exam.semester === selectedSemester
+            );
+        }
+
+        // Filter by search term
+        if (searchTerm.trim()) {
+            const search = searchTerm.toLowerCase();
+            filtered = filtered.filter(
+                (exam) =>
+                    exam.module?.toLowerCase().includes(search) ||
+                    exam.niveau?.toLowerCase().includes(search) ||
+                    exam.group?.toLowerCase().includes(search) ||
+                    exam.room?.toLowerCase().includes(search)
+            );
+        }
+
+        return filtered;
     };
 
-    const handleSemesterExamClick = (semester, examType) => {
-        setActiveSemester(semester);
-        setSelectedExamType(examType);
+    const getExamTypeLabel = (type) => {
+        const typeMap = {
+            cc: t.cc,
+            examen: t.exam,
+            rattrapage: t.ratt,
+        };
+        return typeMap[type] || type;
     };
 
     /* ================= EXPORT PDF ================= */
     const exportToPDF = () => {
-        const currentList = getCurrentList();
+        const filteredExams = getFilteredExams();
 
-        if (!currentList.length) {
+        if (!filteredExams.length) {
             alert(t.noExam);
             return;
         }
 
         const doc = new jsPDF();
-        const examTypeText =
-            selectedExamType === "CC"
-                ? t.cc
-                : selectedExamType === "EXAM"
-                ? t.exam
-                : t.ratt;
 
-        doc.text(`${t.teacherName} ${teacherData?.name || ""}`, 20, 20);
-        doc.text(
-            `${t.semesters} ${activeSemester?.name || ""} - ${examTypeText}`,
-            20,
-            30
-        );
+        // Title
+        doc.setFontSize(16);
+        doc.text(`${t.examSchedule}`, 20, 20);
+        doc.setFontSize(12);
+        doc.text(`${t.fullName}: ${teacherData?.name || ""}`, 20, 30);
 
+        // Filter info
+        let filterInfo = "";
+        if (selectedExamType !== "ALL") {
+            const typeMap = { CC: t.cc, EXAM: t.exam, RATT: t.ratt };
+            filterInfo += `${t.type}: ${typeMap[selectedExamType]} `;
+        }
+        if (selectedSemester !== "ALL") {
+            filterInfo += `${t.semester}: ${selectedSemester}`;
+        }
+        if (filterInfo) {
+            doc.text(filterInfo, 20, 37);
+        }
+
+        // Table
         autoTable(doc, {
-            head: [[t.module, t.levelGroup, t.room, t.date, t.schedule]],
-            body: currentList.map((exam) => [
+            head: [
+                [
+                    t.type,
+                    t.module,
+                    t.semester,
+                    t.levelGroup,
+                    t.room,
+                    t.date,
+                    t.schedule,
+                ],
+            ],
+            body: filteredExams.map((exam) => [
+                getExamTypeLabel(exam.type),
                 exam.module,
+                exam.semester || "-",
                 `${exam.niveau}/${exam.group}`,
                 exam.room,
                 new Date(exam.date).toLocaleDateString(),
                 `${exam.start_time} - ${exam.end_time}`,
             ]),
-            startY: 40,
+            startY: filterInfo ? 45 : 40,
         });
 
-        doc.save(`examens_${activeSemester?.name}_${selectedExamType}.pdf`);
+        doc.save(`planning_examens_${teacherData?.name || "enseignant"}.pdf`);
     };
 
     /* ================= CLAIM FUNCTIONS ================= */
@@ -275,10 +326,9 @@ export default function EspaceEnseignants() {
 
         setClaimSubmitting(true);
         try {
-            // Send claim with the correct parameters matching your PHP backend
             await api.post("/claims", {
                 exam_id: selectedExamForClaim.id,
-                exam_type: selectedExamForClaim.type || selectedExamType,
+                exam_type: selectedExamForClaim.type,
                 message: claimMessage,
                 teacher_matricule: user.matricule,
             });
@@ -317,7 +367,7 @@ export default function EspaceEnseignants() {
                     style={{ width: "800px" }}
                 >
                     <h2 className="text-center text-[#0B2844] font-semibold font-montserrat mb-8 text-2xl">
-                        {t.teacherProfile || "Profil Enseignant"}
+                        {t.teacherProfile}
                     </h2>
 
                     <div className="flex justify-center mb-8">
@@ -367,28 +417,6 @@ export default function EspaceEnseignants() {
                                 </p>
                                 <p className="text-[#0B2844] text-lg font-semibold font-montserrat">
                                     {teacherData.specialite}
-                                </p>
-                            </div>
-                        )}
-
-                        {teacherData?.niveau && (
-                            <div className="pb-4">
-                                <p className="text-[#768FA6] text-sm font-montserrat mb-1">
-                                    {t.level}
-                                </p>
-                                <p className="text-[#0B2844] text-lg font-semibold font-montserrat">
-                                    {teacherData.niveau}
-                                </p>
-                            </div>
-                        )}
-
-                        {teacherData?.groupe && (
-                            <div className="pb-4">
-                                <p className="text-[#768FA6] text-sm font-montserrat mb-1">
-                                    {t.group}
-                                </p>
-                                <p className="text-[#0B2844] text-lg font-semibold font-montserrat">
-                                    {teacherData.groupe}
                                 </p>
                             </div>
                         )}
@@ -444,123 +472,233 @@ export default function EspaceEnseignants() {
         );
     };
 
-    /* ================= EXAM TABLE COMPONENT ================= */
-    const ExamTable = ({ title, examList }) => {
-        if (!examList || examList.length === 0) {
-            return (
-                <div className="bg-[#EEF2F8] shadow-lg rounded-lg p-6 border-2 border-[#3A5377] fade-in">
-                    <h2
-                        className={`text-center text-[#0B2844] font-semibold font-montserrat mb-4 text-xl ${
-                            language === "ar" ? "text-right" : ""
-                        }`}
-                    >
-                        {title}
-                    </h2>
-                    <div className="text-center text-gray-500 py-8">
-                        {t.noExam}
-                    </div>
-                </div>
-            );
-        }
+    /* ================= SCHEDULE VIEW ================= */
+    const ScheduleView = () => {
+        const filteredExams = getFilteredExams();
+        const uniqueSemesters = getUniqueSemesters();
 
         return (
-            <div className="bg-[#EEF2F8] shadow-lg rounded-lg p-6 border-2 border-[#3A5377] fade-in">
-                <div className="flex justify-between items-center mb-4">
-                    <h2
-                        className={`text-[#0B2844] font-semibold font-montserrat text-xl ${
-                            language === "ar" ? "text-right" : ""
-                        }`}
-                    >
-                        {title}
-                    </h2>
-                    <button
-                        onClick={exportToPDF}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-montserrat font-semibold hover:bg-green-700 transition-all shadow-md flex items-center space-x-2 hover-scale"
-                    >
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            <div className="mt-12 px-8 fade-in">
+                {/* Filters Section */}
+                <div className="bg-[#EEF2F8] shadow-lg rounded-lg p-6 border-2 border-[#3A5377] mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Type Filter */}
+                        <div>
+                            <label className="block text-[#0B2844] font-semibold font-montserrat mb-2">
+                                {t.filterByType}
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {["ALL", "CC", "EXAM", "RATT"].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() =>
+                                            setSelectedExamType(type)
+                                        }
+                                        className={`px-4 py-2 rounded-lg font-montserrat font-semibold transition-all ${
+                                            selectedExamType === type
+                                                ? "bg-[#3A5377] text-white shadow-md"
+                                                : "bg-white text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
+                                        }`}
+                                    >
+                                        {type === "ALL"
+                                            ? t.all
+                                            : type === "CC"
+                                            ? t.cc
+                                            : type === "EXAM"
+                                            ? t.exam
+                                            : t.ratt}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Semester Filter */}
+                        <div>
+                            <label className="block text-[#0B2844] font-semibold font-montserrat mb-2">
+                                {t.filterBySemester}
+                            </label>
+                            <select
+                                value={selectedSemester}
+                                onChange={(e) =>
+                                    setSelectedSemester(e.target.value)
+                                }
+                                className="w-full px-4 py-2 border-2 border-[#3A5377] rounded-lg font-montserrat focus:outline-none focus:ring-2 focus:ring-[#3A5377]"
+                            >
+                                <option value="ALL">{t.allSemesters}</option>
+                                {uniqueSemesters.map((semester) => (
+                                    <option key={semester} value={semester}>
+                                        {semester}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Search */}
+                        <div>
+                            <label className="block text-[#0B2844] font-semibold font-montserrat mb-2">
+                                {t.search}
+                            </label>
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder={t.search}
+                                className="w-full px-4 py-2 border-2 border-[#3A5377] rounded-lg font-montserrat focus:outline-none focus:ring-2 focus:ring-[#3A5377]"
                             />
-                        </svg>
-                        <span>{t.export}</span>
-                    </button>
+                        </div>
+                    </div>
+
+                    {/* Stats and Export */}
+                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-[#3A5377]">
+                        <p className="text-[#0B2844] font-semibold font-montserrat">
+                            {t.totalExams}:{" "}
+                            <span className="text-[#3A5377] text-lg">
+                                {filteredExams.length}
+                            </span>
+                        </p>
+                        <button
+                            onClick={exportToPDF}
+                            className="px-6 py-2 bg-green-600 text-white rounded-lg font-montserrat font-semibold hover:bg-green-700 transition-all shadow-md flex items-center space-x-2 hover-scale"
+                        >
+                            <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                            <span>{t.export}</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table
-                        className={`min-w-full border border-[#3A5377] rounded-lg text-[#0B2844] font-montserrat exam-table ${
-                            language === "ar" ? "text-right" : ""
-                        }`}
-                    >
-                        <thead>
-                            <tr className="text-center bg-[#F8FAFC]">
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    {t.module}
-                                </th>
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    {t.levelGroup}
-                                </th>
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    {t.room}
-                                </th>
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    {t.date}
-                                </th>
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    {t.schedule}
-                                </th>
-                                <th className="border border-[#3A5377] px-4 py-3">
-                                    {t.report}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {examList.map((exam, index) => (
-                                <tr
-                                    key={exam.id || index}
-                                    className="text-center hover-row"
-                                >
-                                    <td className="border border-[#3A5377] px-4 py-3 font-semibold">
-                                        {exam.module}
-                                    </td>
-                                    <td className="border border-[#3A5377] px-4 py-3">
-                                        {exam.niveau}/{exam.group}
-                                    </td>
-                                    <td className="border border-[#3A5377] px-4 py-3">
-                                        {exam.room}
-                                    </td>
-                                    <td className="border border-[#3A5377] px-4 py-3">
-                                        {new Date(exam.date).toLocaleDateString(
-                                            language === "ar"
-                                                ? "ar-DZ"
-                                                : "fr-FR"
-                                        )}
-                                    </td>
-                                    <td className="border border-[#3A5377] px-4 py-3">
-                                        {exam.start_time} - {exam.end_time}
-                                    </td>
-                                    <td className="border border-[#3A5377] px-4 py-3">
-                                        <button
-                                            onClick={() =>
-                                                handleOpenClaimModal(exam)
-                                            }
-                                            className="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-all text-sm"
-                                        >
+                {/* Exams Table */}
+                <div className="bg-[#EEF2F8] shadow-lg rounded-lg p-6 border-2 border-[#3A5377]">
+                    {filteredExams.length === 0 ? (
+                        <div className="text-center text-gray-500 py-12">
+                            <svg
+                                className="w-16 h-16 mx-auto mb-4 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                            <p className="text-xl font-montserrat">
+                                {t.noExam}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table
+                                className={`min-w-full border border-[#3A5377] rounded-lg text-[#0B2844] font-montserrat exam-table ${
+                                    language === "ar" ? "text-right" : ""
+                                }`}
+                            >
+                                <thead>
+                                    <tr className="text-center bg-[#F8FAFC]">
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.type}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.module}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.semester}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.levelGroup}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.room}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.date}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
+                                            {t.schedule}
+                                        </th>
+                                        <th className="border border-[#3A5377] px-4 py-3">
                                             {t.report}
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredExams.map((exam, index) => (
+                                        <tr
+                                            key={exam.id || index}
+                                            className="text-center hover-row"
+                                        >
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                        exam.type === "cc"
+                                                            ? "bg-blue-100 text-blue-800"
+                                                            : exam.type ===
+                                                              "examen"
+                                                            ? "bg-purple-100 text-purple-800"
+                                                            : "bg-orange-100 text-orange-800"
+                                                    }`}
+                                                >
+                                                    {getExamTypeLabel(
+                                                        exam.type
+                                                    )}
+                                                </span>
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3 font-semibold">
+                                                {exam.module}
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                {exam.semester || "-"}
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                {exam.niveau}/{exam.group}
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                {exam.room}
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                {new Date(
+                                                    exam.date
+                                                ).toLocaleDateString(
+                                                    language === "ar"
+                                                        ? "ar-DZ"
+                                                        : "fr-FR"
+                                                )}
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                {exam.start_time} -{" "}
+                                                {exam.end_time}
+                                            </td>
+                                            <td className="border border-[#3A5377] px-4 py-3">
+                                                <button
+                                                    onClick={() =>
+                                                        handleOpenClaimModal(
+                                                            exam
+                                                        )
+                                                    }
+                                                    className="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-all text-sm"
+                                                >
+                                                    {t.report}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -570,9 +708,8 @@ export default function EspaceEnseignants() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#E6EEF7]">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-[#3A5377] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-[#0B2844] font-montserrat font-semibold">{t.loading || "Chargement..."}</p>
+                <div className="text-[#0B2844] text-xl font-semibold">
+                    {t.loading}
                 </div>
             </div>
         );
@@ -580,15 +717,15 @@ export default function EspaceEnseignants() {
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#E6EEF7] p-4">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full border-2 border-red-500">
-                    <p className="text-red-600 mb-4">{t.error || "Erreur"}: {error}</p>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-[#E6EEF7]">
+                <div className="text-red-600 text-xl font-semibold mb-4">
+                    {t.error} {error}
                 </div>
                 <button
                     onClick={() => window.location.reload()}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover-scale"
                 >
-                    {t.retry || "Réessayer"}
+                    {t.retry}
                 </button>
             </div>
         );
@@ -612,6 +749,22 @@ export default function EspaceEnseignants() {
                 <h1 className="text-2xl font-semibold text-center pt-6 mb-6 text-[#0B2844] font-montserrat fade-in">
                     {t.department}
                 </h1>
+
+                {/* Notification Bell - Add this before logout icon */}
+                {teacherData && (
+                    <div
+                        className="absolute top-4 right-20"
+                        style={{ zIndex: 1000 }}
+                    >
+                        <NotificationBell
+                            teacherMatricule={
+                                teacherData.matricule ||
+                                JSON.parse(localStorage.getItem("user"))
+                                    ?.matricule
+                            }
+                        />
+                    </div>
+                )}
 
                 <div
                     className="absolute top-4 right-4 border-2 border-[#0B2844] rounded-2xl p-2 cursor-pointer hover:bg-gray-100 icon-hover"
@@ -641,11 +794,7 @@ export default function EspaceEnseignants() {
                 {/* Navigation Tabs */}
                 <div className="flex justify-center mt-8 space-x-4 fade-in">
                     <button
-                        onClick={() => {
-                            setCurrentView("schedule");
-                            setActiveSemester(null);
-                            setSelectedExamType(null);
-                        }}
+                        onClick={() => setCurrentView("schedule")}
                         className={`px-8 py-3 rounded-lg font-montserrat font-semibold transition-all hover-scale ${
                             currentView === "schedule"
                                 ? "bg-[#3A5377] text-white shadow-lg"
@@ -655,11 +804,7 @@ export default function EspaceEnseignants() {
                         {t.examSchedule}
                     </button>
                     <button
-                        onClick={() => {
-                            setCurrentView("profile");
-                            setActiveSemester(null);
-                            setSelectedExamType(null);
-                        }}
+                        onClick={() => setCurrentView("profile")}
                         className={`px-8 py-3 rounded-lg font-montserrat font-semibold transition-all hover-scale ${
                             currentView === "profile"
                                 ? "bg-[#3A5377] text-white shadow-lg"
@@ -670,111 +815,8 @@ export default function EspaceEnseignants() {
                     </button>
                 </div>
 
-                {/* Conditional Rendering Based on Current View */}
-                {currentView === "profile" ? (
-                    <ProfileView />
-                ) : (
-                    <>
-                        <div className="flex items-center justify-center mt-12 fade-in">
-                            <div
-                                className={`bg-[#EEF2F8] shadow-lg rounded-lg p-4 border-2 border-[#3A5377] ${
-                                    language === "ar" ? "text-right" : ""
-                                }`}
-                                style={{ width: "1600px", minHeight: "300px" }}
-                            >
-                                {teacherData && (
-                                    <p
-                                        className={`text-[#0B2844] mb-4 text-xl font-semibold font-montserrat ${
-                                            language === "ar"
-                                                ? "text-right"
-                                                : "text-left"
-                                        }`}
-                                    >
-                                        {t.teacherName} {teacherData.name}
-                                    </p>
-                                )}
-
-                                <p
-                                    className={`text-[#0B2844] mb-4 font-semibold font-montserrat ${
-                                        language === "ar"
-                                            ? "text-right"
-                                            : "text-left"
-                                    }`}
-                                >
-                                    {t.semesters}
-                                </p>
-
-                                {/* Show only teacher's semesters with exams */}
-                                {teacherSemesters.length > 0 ? (
-                                    teacherSemesters.map((semester) => (
-                                        <div
-                                            key={semester.id}
-                                            className="flex items-center space-x-4 mb-2"
-                                        >
-                                            <p className="text-[#0B2844] font-regular font-montserrat w-24">
-                                                {semester.name}
-                                            </p>
-                                            <div className="flex space-x-3">
-                                                {["CC", "EXAM", "RATT"].map(
-                                                    (tab) => (
-                                                        <button
-                                                            key={tab}
-                                                            onClick={() =>
-                                                                handleSemesterExamClick(
-                                                                    semester,
-                                                                    tab
-                                                                )
-                                                            }
-                                                            className={`text-[#0B2844] font-montserrat hover:underline tab-hover ${
-                                                                activeSemester?.id ===
-                                                                    semester.id &&
-                                                                selectedExamType ===
-                                                                    tab
-                                                                    ? "underline font-semibold"
-                                                                    : ""
-                                                            }`}
-                                                        >
-                                                            {tab}
-                                                        </button>
-                                                    )
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center text-gray-500 py-8">
-                                        {t.noExamAvailable}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Show Selected Exam Table */}
-                        {activeSemester && selectedExamType && (
-                            <div className="flex flex-col items-center justify-center mt-12 slide-in">
-                                <ExamTable
-                                    title={`${activeSemester.name} - ${
-                                        selectedExamType === "CC"
-                                            ? t.cc
-                                            : selectedExamType === "EXAM"
-                                            ? t.exam
-                                            : t.ratt
-                                    }`}
-                                    examList={getCurrentList()}
-                                />
-                                <button
-                                    onClick={() => {
-                                        setActiveSemester(null);
-                                        setSelectedExamType(null);
-                                    }}
-                                    className="mt-4 px-6 py-2 border border-[#3A5377] rounded-lg text-[#0B2844] hover:bg-gray-100 hover-scale"
-                                >
-                                    {t.close}
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
+                {/* Content */}
+                {currentView === "profile" ? <ProfileView /> : <ScheduleView />}
             </div>
 
             {/* Footer */}
@@ -801,6 +843,8 @@ export default function EspaceEnseignants() {
                                 {selectedExamForClaim.module}
                             </p>
                             <p className="text-sm text-gray-600">
+                                {getExamTypeLabel(selectedExamForClaim.type)} |{" "}
+                                {selectedExamForClaim.semester} |{" "}
                                 {selectedExamForClaim.niveau}/
                                 {selectedExamForClaim.group} | Salle:{" "}
                                 {selectedExamForClaim.room} | Date:{" "}
