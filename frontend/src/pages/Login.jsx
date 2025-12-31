@@ -1,11 +1,12 @@
-// Login.jsx (Updated with Sanctum Token Handling)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../App";
 import api from "../api/axios";
 import "../styles/login.css";
 
 export default function Login() {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [matricule, setMatricule] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -17,6 +18,8 @@ export default function Login() {
         setLoading(true);
 
         try {
+            console.log("🔐 Attempting login...");
+            
             const response = await api.post("/Login", {
                 matricule,
                 password,
@@ -24,48 +27,32 @@ export default function Login() {
 
             const data = response.data;
 
-            // Expected response from Laravel:
-            // {
-            //   "user": { "id": 1, "name": "...", "matricule": "...", "role": "student", ... },
-            //   "token": "1|laravel_sanctum_abc123..."   // plain-text token
-            // }
-
             if (!data.user || !data.token) {
                 throw new Error("Invalid response from server: missing user or token");
             }
 
-            // Clear any old auth data
-            localStorage.removeItem("user");
-            delete api.defaults.headers.common["Authorization"];
+            console.log("✅ Login successful, role:", data.user.role);
 
-            // Create user object with token
-            const userWithToken = {
-                ...data.user,
-                token: data.token  // Attach token to user object
-            };
-
-            // Save to localStorage
-            localStorage.setItem("user", JSON.stringify(userWithToken));
-
-            // Set Authorization header for all future API requests
-            api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+            // Use the context login function
+            login(data.user, data.token);
 
             // Role-based navigation
+            console.log("🚀 Navigating to", data.user.role, "dashboard...");
             switch (data.user.role) {
                 case "admin":
-                    navigate("/admin-dashboard");
+                    navigate("/admin-dashboard", { replace: true });
                     break;
                 case "teacher":
-                    navigate("/EspaceEnseignants");
+                    navigate("/EspaceEnseignants", { replace: true });
                     break;
                 case "student":
-                    navigate("/student-dashboard");
+                    navigate("/student-dashboard", { replace: true });
                     break;
                 default:
                     setError("Rôle inconnu ou non autorisé");
             }
         } catch (err) {
-            console.error("Login error:", err);
+            console.error("❌ Login error:", err);
             setError(
                 err.response?.data?.message ||
                 err.message ||
@@ -86,7 +73,7 @@ export default function Login() {
             <div className="themed-shape shape-book">📚</div>
             <div className="themed-shape shape-computer">💻</div>
             <div className="themed-shape shape-graduation">🎓</div>
-            <div className="themed-shape shape-study">📝</div>
+            <div className="themed-shape shape-study">📖</div>
             
             <img
                 src="/logouni.png"

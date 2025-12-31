@@ -52,8 +52,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Student & Teacher Exam Access
     Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
     Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
-    // In your routes/api.php, update the teacher exam route:
-
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -78,15 +76,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('groups', GroupController::class);
     Route::apiResource('claims', ClaimController::class);
 
-    // Imports
-    Route::post('/import/students', [ImportController::class, 'import']);
+    // Import Routes
+    Route::post('/import/students', [ImportController::class, 'import']); // Alias for backward compatibility
     Route::post('/modules/import', [ImportmodulesController::class, 'import']);
     Route::post('/salles/import', [ImportSallesController::class, 'import']);
+    // Correct
+    Route::post('/import', [ImportController::class, 'store']);
 
     // Available rooms
     Route::get('/salles/available', [SalleController::class, 'available']);
 
-    // Notifications - FIXED ROUTES
+    // Notifications
     Route::prefix('notifications')->group(function () {
         Route::get('/teacher/{matricule}', [NotificationController::class, 'getTeacherNotifications']);
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);

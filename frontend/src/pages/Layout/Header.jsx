@@ -1,33 +1,32 @@
 import React from 'react';
 import api from '../../api/axios'; 
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
-const Header = ({ user, onLogout, onToggleSidebar }) => {
-  const navigate = useNavigate(); // For redirecting after logout
+const Header = ({ user, onToggleSidebar }) => {
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       // Call Laravel logout endpoint to revoke the current token
       await api.post('/logout');
-      console.log("Logged out successfully from server");
+      console.log("✅ Logged out successfully from server");
     } catch (err) {
-      // Even if the API call fails (e.g., network issue or token already invalid),
-      // we still proceed with local cleanup
-      console.warn("Logout API failed:", err);
+      // Even if the API call fails, proceed with local cleanup
+      console.warn("⚠️ Logout API failed:", err);
     } finally {
-      // Always clear local data
-      localStorage.removeItem("user");
+      console.log("🧹 Clearing all auth data...");
+      
+      // Clear ALL storage (not just user)
+      localStorage.clear();
+      sessionStorage.clear();
 
       // Clear Authorization header from axios
       delete api.defaults.headers.common["Authorization"];
 
-      // Optional: Notify parent component (if needed)
-      if (onLogout) {
-        onLogout();
-      }
-
-      // Redirect to login page
-      navigate("/");
+      console.log("🔄 Redirecting to login with hard refresh...");
+      
+      // Use window.location.href for a complete clean reload
+      window.location.href = "/login";
     }
   };
 
@@ -41,9 +40,7 @@ const Header = ({ user, onLogout, onToggleSidebar }) => {
       </div>
       <div className="header-right">
         <div className="user-info">
-          <span>Welcome, Administrator</span>
-          {/* Optional: Show real name if available */}
-          {/* <span>Welcome, {user?.name || 'Administrator'}</span> */}
+          <span>Welcome, {user?.name || 'Administrator'}</span>
         </div>
         <button className="logout-btn" onClick={handleLogout}>
           Déconnexion
