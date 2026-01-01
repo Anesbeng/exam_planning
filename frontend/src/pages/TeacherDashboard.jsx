@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Modal from "./UI/Modal";
 import NotificationBell from "./NotificationBell";
+import TeacherConvocationView from "./TeacherConvocationView";
 import logoutIcon from "./logout.png";
 import uniLogo from "./logouni.png";
 import jsPDF from "jspdf";
@@ -20,6 +21,8 @@ export default function EspaceEnseignants() {
     const [error, setError] = useState(null);
     const [currentView, setCurrentView] = useState("schedule");
     const [language, setLanguage] = useState("fr");
+
+    const [selectedNotification, setSelectedNotification] = useState(null);
 
     // Calendar view states
     const [calendarView, setCalendarView] = useState("month"); // 'month' or 'list'
@@ -92,6 +95,11 @@ export default function EspaceEnseignants() {
             notAssigned: "Non assigné",
             viewDetails: "Voir",
             examDetails: "Détails de l'examen",
+            convocation: "Convocation",
+            convocationView: "Voir la Convocation",
+            studentsList: "Liste des Étudiants",
+            downloadConvocation: "Télécharger la Convocation",
+            closeConvocation: "Fermer la Convocation",
         },
         ar: {
             department: "قسم الإعلام الآلي",
@@ -145,6 +153,11 @@ export default function EspaceEnseignants() {
             notAssigned: "غير معين",
             viewDetails: "عرض",
             examDetails: "تفاصيل الامتحان",
+            convocation: "استدعاء",
+            convocationView: "عرض الاستدعاء",
+            studentsList: "قائمة الطلاب",
+            downloadConvocation: "تحميل الاستدعاء",
+            closeConvocation: "إغلاق الاستدعاء",
         },
     };
 
@@ -876,16 +889,71 @@ export default function EspaceEnseignants() {
                                                 {exam.end_time}
                                             </td>
                                             <td className="border border-[#3A5377] px-4 py-3">
-                                                <button
-                                                    onClick={() =>
-                                                        handleOpenClaimModal(
-                                                            exam
-                                                        )
-                                                    }
-                                                    className="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-all text-sm"
-                                                >
-                                                    {t.report}
-                                                </button>
+                                                <td className="border border-[#3A5377] px-4 py-3">
+                                                    <div className="flex justify-center space-x-2">
+                                                        {/* Bouton Convocation - seulement pour les examens dont l'enseignant est responsable */}
+                                                        {(exam.teacher_matricule ===
+                                                            teacherData?.matricule ||
+                                                            exam.responsable_id ===
+                                                                teacherData?.id) && (
+                                                            <button
+                                                                onClick={() =>
+                                                                    setSelectedNotification(
+                                                                        {
+                                                                            exam_id:
+                                                                                exam.id,
+                                                                            exam,
+                                                                            type: "convocation",
+                                                                        }
+                                                                    )
+                                                                }
+                                                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-all text-sm flex items-center"
+                                                                title="Voir la convocation"
+                                                            >
+                                                                <svg
+                                                                    className="w-4 h-4 mr-1"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth="2"
+                                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                                    />
+                                                                </svg>
+                                                                {t.convocation}
+                                                            </button>
+                                                        )}
+
+                                                        {/* Bouton Signaler */}
+                                                        <button
+                                                            onClick={() =>
+                                                                handleOpenClaimModal(
+                                                                    exam
+                                                                )
+                                                            }
+                                                            className="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-all text-sm flex items-center"
+                                                            title="Signaler un problème"
+                                                        >
+                                                            <svg
+                                                                className="w-4 h-4 mr-1"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth="2"
+                                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.998-.833-2.768 0L4.67 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                                                />
+                                                            </svg>
+                                                            {t.report}
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </td>
                                         </tr>
                                     ))}
@@ -1631,6 +1699,7 @@ export default function EspaceEnseignants() {
                                 JSON.parse(localStorage.getItem("user"))
                                     ?.matricule
                             }
+                            onNotificationClick={setSelectedNotification} // Add this prop
                         />
                     </div>
                 )}
@@ -1703,6 +1772,13 @@ export default function EspaceEnseignants() {
                     <ScheduleView />
                 )}
             </div>
+            {selectedNotification && (
+                <TeacherConvocationView
+                    notification={selectedNotification}
+                    onClose={() => setSelectedNotification(null)}
+                    language={language} // Pass language if needed
+                />
+            )}
 
             <footer className="bg-white border-t border-[#768FA6] mt-auto fade-in">
                 <div className="px-8 py-8">
