@@ -24,6 +24,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ConvocationController;
 
 // ============================
 // PUBLIC ROUTES (No Auth Needed)
@@ -94,5 +95,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [NotificationController::class, 'create']);
         Route::delete('/{id}', [NotificationController::class, 'delete']);
     });
+    Route::prefix('convocations')->group(function () {
+    // Get students list for an exam
+    Route::get('/exam/{examId}/students', [ConvocationController::class, 'getStudentsForExam']);
     
+    // Generate convocation preview (for PDF generation on frontend)
+    Route::get('/exam/{examId}/preview', [ConvocationController::class, 'generateConvocationPreview']);
+    
+    // Send notification to teacher
+    Route::post('/exam/{examId}/notify', [ConvocationController::class, 'sendConvocationNotification']);
+    
+    // Get convocation history
+    Route::get('/exam/{examId}/history', [ConvocationController::class, 'getConvocationHistory']);
+});
+
 });

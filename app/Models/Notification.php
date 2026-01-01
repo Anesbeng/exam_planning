@@ -10,6 +10,9 @@ class Notification extends Model
 {
     use HasFactory;
 
+    // Make sure this table name matches your database
+    protected $table = 'notifications';
+
     protected $fillable = [
         'teacher_matricule',
         'exam_id',
@@ -24,14 +27,12 @@ class Notification extends Model
         'updated_at' => 'datetime',
     ];
 
+    // Relationships
     public function exam()
     {
         return $this->belongsTo(Exam::class, 'exam_id');
     }
 
-    /**
-     * Relationship with Teacher (User)
-     */
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_matricule', 'matricule');

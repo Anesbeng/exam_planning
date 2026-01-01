@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
 import "./exam-Management.css";
+import ConvocationModal from "./ConvocationModal";
+import NotifyTeacherModal from "./NotifyTeacherModal";
 
 const ExamManagement = () => {
     const [showAddExamModal, setShowAddExamModal] = useState(false);
@@ -9,7 +11,12 @@ const ExamManagement = () => {
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
     const [exams, setExams] = useState([]);
+
     const [selectedExam, setSelectedExam] = useState(null);
+    const [selectedExamForConvocation, setSelectedExamForConvocation] =
+        useState(null);
+    const [selectedExamForNotification, setSelectedExamForNotification] =
+        useState(null);
 
     const [availableRoomsNew, setAvailableRoomsNew] = useState([]);
     const [availableRoomsEdit, setAvailableRoomsEdit] = useState([]);
@@ -419,7 +426,10 @@ const ExamManagement = () => {
                     setSelectedExam(e);
                     setShowDeleteConfirmModal(true);
                 }}
+                onConvocation={(exam) => setSelectedExamForConvocation(exam)}
+                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
             />
+
             <Section
                 title="CC"
                 data={examTypes.cc}
@@ -428,7 +438,9 @@ const ExamManagement = () => {
                     setSelectedExam(e);
                     setShowDeleteConfirmModal(true);
                 }}
+                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
             />
+
             <Section
                 title="Rattrapage"
                 data={examTypes.rattrapage}
@@ -437,7 +449,23 @@ const ExamManagement = () => {
                     setSelectedExam(e);
                     setShowDeleteConfirmModal(true);
                 }}
+                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
             />
+            {selectedExamForConvocation && (
+                <ConvocationModal
+                    exam={selectedExamForConvocation}
+                    onClose={() => setSelectedExamForConvocation(null)}
+                />
+            )}
+            {selectedExamForNotification && (
+                <NotifyTeacherModal
+                    exam={selectedExamForNotification}
+                    onClose={() => setSelectedExamForNotification(null)}
+                    onSuccess={() => {
+                        console.log("Notification sent successfully!");
+                    }}
+                />
+            )}
 
             {/* ADD MODAL */}
             <Modal
@@ -725,7 +753,14 @@ const ExamForm = ({
 );
 
 /* ================= TABLE COMPONENT ================= */
-const Section = ({ title, data, onEdit, onDelete }) => (
+const Section = ({
+    title,
+    data,
+    onEdit,
+    onDelete,
+    onConvocation,
+    onNotify,
+}) => (
     <div className="exam-section">
         <h2>{title}</h2>
         <table className="exam-table">
@@ -769,14 +804,24 @@ const Section = ({ title, data, onEdit, onDelete }) => (
                                 <button
                                     className="btn-edit"
                                     onClick={() => onEdit(e)}
+                                    title="Modifier"
                                 >
                                     ✏️
                                 </button>
                                 <button
                                     className="btn-delete"
                                     onClick={() => onDelete(e)}
+                                    title="Supprimer"
                                 >
                                     🗑️
+                                </button>
+                                {/* ← ADD THIS BUTTON */}
+                                <button
+                                    className="btn-notify"
+                                    onClick={() => onNotify(e)}
+                                    title="Notifier l'enseignant"
+                                >
+                                    📧 Notifier
                                 </button>
                             </td>
                         </tr>

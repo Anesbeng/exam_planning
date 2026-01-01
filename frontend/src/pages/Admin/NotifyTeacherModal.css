@@ -1,0 +1,361 @@
+/* NotifyTeacherModal.css */
+
+.notify-teacher-content {
+    padding: 20px;
+}
+
+.exam-summary {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.exam-summary h3 {
+    color: #1e40af;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+}
+
+.exam-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-item .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-item .value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-blue-600 {
+    color: #2563eb;
+}
+
+.notification-options {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.notification-options h3 {
+    color: #334155;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+}
+
+.option-item {
+    margin-bottom: 20px;
+}
+
+.option-item:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 15px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.checkbox-label span {
+    user-select: none;
+}
+
+.textarea-label {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.message-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s;
+    min-height: 100px;
+}
+
+.message-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.option-description {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.info-box {
+    display: flex;
+    gap: 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.info-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.info-text {
+    flex: 1;
+}
+
+.info-text p {
+    margin: 0 0 8px 0;
+    color: #78350f;
+    font-size: 14px;
+}
+
+.info-text .font-semibold {
+    font-weight: 600;
+}
+
+.info-text ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-text li {
+    color: #78350f;
+    font-size: 14px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.btn-cancel,
+.btn-send {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-cancel {
+    background: white;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.btn-send {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-send:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-send:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-send:disabled,
+.btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .notify-teacher-content {
+        padding: 16px;
+    }
+
+    .exam-summary,
+    .notification-options,
+    .info-box {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .exam-info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .info-item .label {
+        font-size: 11px;
+    }
+
+    .info-item .value {
+        font-size: 14px;
+    }
+
+    .info-box {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-cancel,
+    .btn-send {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .exam-summary h3,
+    .notification-options h3 {
+        font-size: 16px;
+    }
+
+    .checkbox-label,
+    .textarea-label {
+        font-size: 14px;
+    }
+
+    .message-textarea {
+        font-size: 13px;
+        min-height: 80px;
+    }
+
+    .option-description {
+        font-size: 12px;
+    }
+
+    .info-text p,
+    .info-text li {
+        font-size: 13px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.notify-teacher-content {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Focus Styles for Accessibility */
+.checkbox-label:focus-within {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.message-textarea:focus-visible {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-cancel:focus-visible,
+.btn-send:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Print Styles (if modal is visible during print) */
+@media print {
+    .notify-teacher-content {
+        padding: 0;
+    }
+
+    .modal-actions {
+        display: none;
+    }
+
+    .info-box {
+        border: 1px solid #000;
+        background: white;
+    }
+}
