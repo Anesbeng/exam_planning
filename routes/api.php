@@ -53,8 +53,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Student & Teacher Exam Access
     Route::get('/student/exams', [StudentExamController::class, 'getMyExams']);
     Route::get('/teacher/exams', [TeacherExamController::class, 'getMyExams']);
-    // In your routes/api.php, update the teacher exam route:
-
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -64,8 +62,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-    // Exam Management (with notifications)
-    Route::apiResource('exams', ExamController::class);
+    // ========================
+    // EXAM MANAGEMENT ROUTES
+    // ========================
+    Route::prefix('exams')->group(function () {
+        Route::get('/', [ExamController::class, 'index']);
+        Route::post('/', [ExamController::class, 'store']);
+        Route::get('/{id}', [ExamController::class, 'show']);
+        Route::put('/{id}', [ExamController::class, 'update']);
+        Route::delete('/{id}', [ExamController::class, 'destroy']);
+        Route::delete('/', [ExamController::class, 'bulkDelete']);
+        
+        // Auto-assign and availability routes
+        Route::post('/auto-assign', [ExamController::class, 'autoAssign']);
+        Route::get('/available-teachers', [ExamController::class, 'getAvailableTeachers']);
+        Route::post('/check-teacher-availability', [ExamController::class, 'checkTeacherAvailability']);
+    });
 
     // Other Resources
     Route::apiResource('students', StudentController::class);
@@ -79,15 +91,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('groups', GroupController::class);
     Route::apiResource('claims', ClaimController::class);
 
-    // Imports
-    Route::post('/import/students', [ImportController::class, 'store']);
+    // Import Routes
+    Route::post('/import/students', [ImportController::class, 'import']); // Alias for backward compatibility
     Route::post('/modules/import', [ImportmodulesController::class, 'import']);
     Route::post('/salles/import', [ImportSallesController::class, 'import']);
+    // Correct
+    Route::post('/import', [ImportController::class, 'store']);
 
     // Available rooms
     Route::get('/salles/available', [SalleController::class, 'available']);
 
-    // Notifications - FIXED ROUTES
+
     Route::prefix('notifications')->group(function () {
         Route::get('/teacher/{matricule}', [NotificationController::class, 'getTeacherNotifications']);
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);

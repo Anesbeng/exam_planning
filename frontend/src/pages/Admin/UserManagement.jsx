@@ -24,6 +24,7 @@ const UserManagement = () => {
         role: "student",
         specialite: "",
         niveau: "",
+        annee_scolaire: "",
         groupe: "",
     });
 
@@ -65,6 +66,7 @@ const UserManagement = () => {
             role: user.role,
             specialite: user.specialite || "",
             niveau: user.niveau || "",
+            annee_scolaire: user.annee_scolaire || "",
             groupe: user.groupe || "",
         });
         setShowEditModal(true);
@@ -108,6 +110,7 @@ const UserManagement = () => {
         const validTypes = [
             "text/csv",
             "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "text/plain",
         ];
         if (!validTypes.includes(file.type) && !file.name.endsWith(".csv")) {
@@ -133,7 +136,7 @@ const UserManagement = () => {
 
             let message = response.data.message;
             if (response.data.errors?.length > 0) {
-                message += "\nErreurs:\n" + response.data.errors.join("\n");
+                message += "\n\nErreurs:\n" + response.data.errors.join("\n");
             }
 
             alert(message);
@@ -149,10 +152,11 @@ const UserManagement = () => {
     };
 
     const downloadTemplate = () => {
+        // Fixed: Added annee_scolaire column to match backend expectations (9 columns total)
         const csvContent =
-            "matricule;nom;email;role;password;specialite;niveau;groupe\n" +
-            "USR001;John Doe;john.doe@example.com;student;password123;Informatique;L1;G1\n" +
-            "USR002;Jane Smith;jane.smith@example.com;teacher;password123;Mathématiques;M1;G2";
+            "matricule;nom;email;role;password;specialite;niveau;annee_scolaire;groupe\n" +
+            "USR001;John Doe;john.doe@example.com;student;password123;Informatique;L1;2024-2025;G1\n" +
+            "USR002;Jane Smith;jane.smith@example.com;teacher;password123;Mathématiques;M1;2024-2025;G2";
 
         const blob = new Blob([csvContent], {
             type: "text/csv;charset=utf-8;",
@@ -172,6 +176,7 @@ const UserManagement = () => {
             role: "student",
             specialite: "",
             niveau: "",
+            annee_scolaire: "",
             groupe: "",
         });
     };
@@ -382,6 +387,23 @@ const UserManagement = () => {
                             />
                         </div>
                         <div className="form-group">
+                            <label>Année Scolaire</label>
+                            <input
+                                type="text"
+                                value={newUser.annee_scolaire}
+                                placeholder="ex: 2024-2025"
+                                onChange={(e) =>
+                                    setNewUser({
+                                        ...newUser,
+                                        annee_scolaire: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
                             <label>Groupe</label>
                             <input
                                 type="text"
@@ -424,7 +446,6 @@ const UserManagement = () => {
                 title="Modifier un utilisateur"
             >
                 <div className="form">
-                    {/* Same fields as Add, password optional */}
                     <div className="form-row">
                         <div className="form-group">
                             <label>Nom *</label>
@@ -532,6 +553,23 @@ const UserManagement = () => {
                             />
                         </div>
                         <div className="form-group">
+                            <label>Année Scolaire</label>
+                            <input
+                                type="text"
+                                value={newUser.annee_scolaire}
+                                placeholder="ex: 2024-2025"
+                                onChange={(e) =>
+                                    setNewUser({
+                                        ...newUser,
+                                        annee_scolaire: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
                             <label>Groupe</label>
                             <input
                                 type="text"
@@ -578,10 +616,10 @@ const UserManagement = () => {
             >
                 <div className="import-container">
                     <p>
-                        <strong>Format CSV attendu :</strong>
+                        <strong>Format CSV attendu (séparateur: point-virgule):</strong>
                     </p>
-                    <p>
-                        matricule;nom;email;role;password;specialite;niveau;groupe
+                    <p style={{ fontSize: "0.9em", color: "#666" }}>
+                        matricule;nom;email;role;password;specialite;niveau;annee_scolaire;groupe
                     </p>
                     <button
                         className="btn-secondary"
@@ -599,8 +637,8 @@ const UserManagement = () => {
                             disabled={importing}
                         />
                         {importFile && (
-                            <p style={{ color: "#2563eb" }}>
-                                Fichier sélectionné: {importFile.name}
+                            <p style={{ color: "#2563eb", marginTop: "8px" }}>
+                                ✓ Fichier sélectionné: {importFile.name}
                             </p>
                         )}
                     </div>
