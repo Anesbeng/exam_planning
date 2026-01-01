@@ -3,6 +3,8 @@ import api from "../../api/axios";
 import Modal from "../UI/Modal";
 import "./exam-Management.css";
 import ExamCalendar from "./ExamCalendar";
+import ConvocationModal from "./ConvocationModal";
+import NotifyTeacherModal from "./NotifyTeacherModal";
 
 const ExamManagement = () => {
     // Modal states
@@ -12,7 +14,13 @@ const ExamManagement = () => {
 
     // Data states
     const [exams, setExams] = useState([]);
+
     const [selectedExam, setSelectedExam] = useState(null);
+    const [selectedExamForConvocation, setSelectedExamForConvocation] =
+        useState(null);
+    const [selectedExamForNotification, setSelectedExamForNotification] =
+        useState(null);
+
     const [availableRoomsNew, setAvailableRoomsNew] = useState([]);
     const [availableRoomsEdit, setAvailableRoomsEdit] = useState([]);
     const [teachers, setTeachers] = useState([]);
@@ -182,6 +190,16 @@ const ExamManagement = () => {
         }
     };
 
+    useEffect(() => {
+        if (newExam.date && newExam.startTime && newExam.endTime) {
+            fetchAvailableRoomsForNew();
+        }
+        if (showAddExamModal) {
+            fetchTeachers();
+            fetchModules();
+        }
+    }, [newExam.date, newExam.startTime, newExam.endTime, showAddExamModal]);
+
     const fetchAvailableRoomsForEdit = async () => {
         if (!selectedExam) return;
 
@@ -213,6 +231,24 @@ const ExamManagement = () => {
         setAutoAssignLoading(true);
         setConflictError(null);
 
+        if (showEditExamModal) {
+            fetchTeachers();
+            fetchModules();
+        }
+    }, [
+        editExam.date,
+        editExam.startTime,
+        editExam.endTime,
+        selectedExam,
+        showEditExamModal,
+    ]);
+
+    /* ================= CRUD ================= */
+    const checkTimeOverlap = (start1, end1, start2, end2) => {
+        return start1 < end2 && start2 < end1;
+    };
+
+    const handleAddExam = async () => {
         try {
             const payload = {
                 date: examData.date,
@@ -263,6 +299,13 @@ const ExamManagement = () => {
             
             if (response.data.success) {
                 setAvailableTeachers(response.data.available_teachers || []);
+            if (!availableRoomsNew.some(r => r.name === newExam.room)) {
+                alert("Erreur : La salle sélectionnée n'est pas disponible pour cette date et heure.");
+                return;
+            }
+            if (!newExam.semester) {
+                alert("Veuillez sélectionner un semestre.");
+                return;
             }
         } catch (err) {
             console.error("Fetch available teachers error:", err);
@@ -323,6 +366,31 @@ const ExamManagement = () => {
             setLoading(true);
             setConflictError(null);
 
+            const selectedModule = modules.find(m => m.name === newExam.module);
+            if (selectedModule && selectedModule.teacher_name === newExam.teacher) {
+                alert("Erreur : Le responsable du module ne peut pas être le surveillant.");
+                return;
+            }
+
+            const teacherExamsOnDate = exams.filter(
+                e => e.teacher === newExam.teacher && e.date === newExam.date
+            );
+
+            const hasConflict = teacherExamsOnDate.some(e => 
+                checkTimeOverlap(
+                    newExam.startTime,
+                    newExam.endTime,
+                    e.start_time || e.startTime,
+                    e.end_time || e.endTime
+                )
+            );
+
+            if (hasConflict) {
+                alert("Erreur : L'enseignant a déjà un examen prévu à cette heure. Veuillez choisir une autre heure ou un autre enseignant.");
+                return;
+            }
+
+            // Backend automatically creates notification
             const response = await api.post("/exams", {
                 type: newExam.type,
                 module: newExam.module,
@@ -351,6 +419,21 @@ const ExamManagement = () => {
             alert(errorMessage);
         } finally {
             setLoading(false);
+            console.log("✅ Exam created successfully:", response.data);
+
+            setShowAddExamModal(false);
+            setNewExam(emptyExam);
+            fetchExams();
+
+            // Notify other tabs (teachers) that exams changed
+            localStorage.setItem("examUpdate", Date.now().toString());
+            alert("Examen ajouté avec succès!");
+        } catch (err) {
+            console.error("❌ Create error:", err);
+            const message =
+                err?.response?.data?.message ||
+                "Erreur lors de la création de l'examen";
+            alert(message);
         }
     };
 
@@ -381,6 +464,53 @@ const ExamManagement = () => {
             setLoading(true);
             setConflictError(null);
 
+            if (!editExam.module) {
+                alert("Veuillez sélectionner un module pour cet examen.");
+                return;
+            }
+            if (!editExam.room) {
+                alert(
+                    "Veuillez sélectionner une salle disponible pour cet examen."
+                );
+                return;
+            }
+            if (!availableRoomsEdit.some(r => r.name === editExam.room)) {
+                alert("Erreur : La salle sélectionnée n'est pas disponible pour cette date et heure.");
+                return;
+            }
+            if (!editExam.semester) {
+                alert("Veuillez sélectionner un semestre.");
+                return;
+            }
+
+            const selectedModule = modules.find(m => m.name === editExam.module);
+            if (selectedModule && selectedModule.teacher_name === editExam.teacher) {
+                alert("Erreur : Le responsable du module ne peut pas être le surveillant.");
+                return;
+            }
+
+            const teacherExamsOnDate = exams.filter(
+                e => 
+                    e.teacher === editExam.teacher && 
+                    e.date === editExam.date && 
+                    e.id !== selectedExam.id
+            );
+
+            const hasConflict = teacherExamsOnDate.some(e => 
+                checkTimeOverlap(
+                    editExam.startTime,
+                    editExam.endTime,
+                    e.start_time || e.startTime,
+                    e.end_time || e.endTime
+                )
+            );
+
+            if (hasConflict) {
+                alert("Erreur : L'enseignant a déjà un examen prévu à cette heure. Veuillez choisir une autre heure ou un autre enseignant.");
+                return;
+            }
+
+            // Backend automatically creates notification
             const response = await api.put(`/exams/${selectedExam.id}`, {
                 type: editExam.type,
                 module: editExam.module,
@@ -409,25 +539,39 @@ const ExamManagement = () => {
             alert(errorMessage);
         } finally {
             setLoading(false);
+            console.log("✅ Exam updated successfully:", response.data);
+
+            setShowEditExamModal(false);
+            setSelectedExam(null);
+            fetchExams();
+
+            localStorage.setItem("examUpdate", Date.now().toString());
+            alert("Examen modifié avec succès!");
+        } catch (err) {
+            console.error("❌ Update error:", err);
+            const message =
+                err?.response?.data?.message ||
+                "Erreur lors de la modification de l'examen";
+            alert(message);
         }
     };
 
     const handleDeleteExam = async () => {
         try {
-            setLoading(true);
+            // Backend automatically creates notification before deletion
             const response = await api.delete(`/exams/${selectedExam.id}`);
             
-            if (response.data.success) {
-                alert("✅ Examen supprimé avec succès!");
-                setShowDeleteConfirmModal(false);
-                setSelectedExam(null);
-                await fetchExams();
-            }
+            console.log("✅ Exam deleted successfully:", response.data);
+
+            setShowDeleteConfirmModal(false);
+            setSelectedExam(null);
+            fetchExams();
+
+            localStorage.setItem("examUpdate", Date.now().toString());
+            alert("Examen supprimé avec succès!");
         } catch (err) {
-            console.error("Delete error:", err);
-            alert("❌ Erreur lors de la suppression de l'examen");
-        } finally {
-            setLoading(false);
+            console.error("❌ Delete error:", err);
+            alert("Erreur lors de la suppression de l'examen");
         }
     };
 
@@ -568,6 +712,10 @@ const ExamManagement = () => {
                 loading={loading}
             />
             
+                onConvocation={(exam) => setSelectedExamForConvocation(exam)}
+                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
+            />
+
             <Section
                 title={`✏️ Contrôles Continus (${filteredExams.filter(e => e.type === "cc").length})`}
                 data={examTypes.cc}
@@ -579,6 +727,9 @@ const ExamManagement = () => {
                 loading={loading}
             />
             
+                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
+            />
+
             <Section
                 title={`🔄 Rattrapages (${filteredExams.filter(e => e.type === "rattrapage").length})`}
                 data={examTypes.rattrapage}
@@ -588,7 +739,23 @@ const ExamManagement = () => {
                     setShowDeleteConfirmModal(true);
                 }}
                 loading={loading}
+                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
             />
+            {selectedExamForConvocation && (
+                <ConvocationModal
+                    exam={selectedExamForConvocation}
+                    onClose={() => setSelectedExamForConvocation(null)}
+                />
+            )}
+            {selectedExamForNotification && (
+                <NotifyTeacherModal
+                    exam={selectedExamForNotification}
+                    onClose={() => setSelectedExamForNotification(null)}
+                    onSuccess={() => {
+                        console.log("Notification sent successfully!");
+                    }}
+                />
+            )}
 
             {filteredExams.length > 0 && (
                 <div className="pagination">
@@ -1105,7 +1272,16 @@ const ExamForm = ({
 };
 
 /* ================= TABLE COMPONENT ================= */
-const Section = ({ title, data, onEdit, onDelete, loading }) => (
+const Section = ({
+    title,
+    data,
+    onEdit,
+    onDelete,
+    loading , 
+    onConvocation,
+    onNotify,
+
+}) => (
     <div className="exam-section">
         <h2>{title}</h2>
         
@@ -1175,6 +1351,14 @@ const Section = ({ title, data, onEdit, onDelete, loading }) => (
                                     title="Supprimer"
                                 >
                                     🗑️
+                                </button>
+                                {/* ← ADD THIS BUTTON */}
+                                <button
+                                    className="btn-notify"
+                                    onClick={() => onNotify(e)}
+                                    title="Notifier l'enseignant"
+                                >
+                                    📧 Notifier
                                 </button>
                             </td>
                         </tr>
