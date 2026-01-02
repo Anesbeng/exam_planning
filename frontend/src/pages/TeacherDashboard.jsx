@@ -554,7 +554,7 @@ export default function EspaceEnseignants() {
             console.error("Error submitting claim:", err);
             alert(
                 err.response?.data?.message ||
-                    "Erreur lors de l'envoi de la réclamation"
+                "Erreur lors de l'envoi de la réclamation"
             );
         } finally {
             setClaimSubmitting(false);
@@ -574,14 +574,17 @@ export default function EspaceEnseignants() {
         return (
             <div className="flex items-center justify-center mt-12 fade-in">
                 <div
-                    className={`bg-[#EEF2F8] shadow-lg rounded-lg p-8 border-2 border-[#3A5377] ${
-                        language === "ar" ? "text-right" : ""
-                    }`}
+                    className={`bg-[#EEF2F8] shadow-lg rounded-lg p-8 border-2 border-[#3A5377] ${language === "ar" ? "text-right" : ""
+                        }`}
                     style={{ width: "800px" }}
                 >
-                    <h2 className="text-center text-[#0B2844] font-semibold font-montserrat mb-8 text-2xl">
+                    <h2
+                        className="text-center text-[#0B2844] font-semibold mb-8 text-2xl"
+                        style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
                         {t.teacherProfile}
                     </h2>
+
 
                     <div className="flex justify-center mb-8">
                         <div className="relative profile-photo">
@@ -705,19 +708,18 @@ export default function EspaceEnseignants() {
                                         onClick={() =>
                                             setSelectedExamType(type)
                                         }
-                                        className={`px-4 py-2 rounded-lg font-montserrat font-semibold transition-all ${
-                                            selectedExamType === type
-                                                ? "bg-[#3A5377] text-white shadow-md"
-                                                : "bg-white text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
-                                        }`}
+                                        className={`px-4 py-2 rounded-lg font-montserrat font-semibold transition-all ${selectedExamType === type
+                                            ? "bg-[#3A5377] text-white shadow-md"
+                                            : "bg-white text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
+                                            }`}
                                     >
                                         {type === "ALL"
                                             ? t.all
                                             : type === "CC"
-                                            ? t.cc
-                                            : type === "EXAM"
-                                            ? t.exam
-                                            : t.ratt}
+                                                ? t.cc
+                                                : type === "EXAM"
+                                                    ? t.exam
+                                                    : t.ratt}
                                     </button>
                                 ))}
                             </div>
@@ -809,9 +811,8 @@ export default function EspaceEnseignants() {
                     ) : (
                         <div className="overflow-x-auto">
                             <table
-                                className={`min-w-full border border-[#3A5377] rounded-lg text-[#0B2844] font-montserrat exam-table ${
-                                    language === "ar" ? "text-right" : ""
-                                }`}
+                                className={`min-w-full border border-[#3A5377] rounded-lg text-[#0B2844] font-montserrat exam-table ${language === "ar" ? "text-right" : ""
+                                    }`}
                             >
                                 <thead>
                                     <tr className="text-center bg-[#F8FAFC]">
@@ -849,14 +850,13 @@ export default function EspaceEnseignants() {
                                         >
                                             <td className="border border-[#3A5377] px-4 py-3">
                                                 <span
-                                                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                                        exam.type === "cc"
-                                                            ? "bg-blue-100 text-blue-800"
-                                                            : exam.type ===
-                                                              "examen"
+                                                    className={`px-3 py-1 rounded-full text-sm font-semibold ${exam.type === "cc"
+                                                        ? "bg-blue-100 text-blue-800"
+                                                        : exam.type ===
+                                                            "examen"
                                                             ? "bg-purple-100 text-purple-800"
                                                             : "bg-orange-100 text-orange-800"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {getExamTypeLabel(
                                                         exam.type
@@ -895,37 +895,37 @@ export default function EspaceEnseignants() {
                                                         {(exam.teacher_matricule ===
                                                             teacherData?.matricule ||
                                                             exam.responsable_id ===
-                                                                teacherData?.id) && (
-                                                            <button
-                                                                onClick={() =>
-                                                                    setSelectedNotification(
-                                                                        {
-                                                                            exam_id:
-                                                                                exam.id,
-                                                                            exam,
-                                                                            type: "convocation",
-                                                                        }
-                                                                    )
-                                                                }
-                                                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-all text-sm flex items-center"
-                                                                title="Voir la convocation"
-                                                            >
-                                                                <svg
-                                                                    className="w-4 h-4 mr-1"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    viewBox="0 0 24 24"
+                                                            teacherData?.id) && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        setSelectedNotification(
+                                                                            {
+                                                                                exam_id:
+                                                                                    exam.id,
+                                                                                exam,
+                                                                                type: "convocation",
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-all text-sm flex items-center"
+                                                                    title="Voir la convocation"
                                                                 >
-                                                                    <path
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                        strokeWidth="2"
-                                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                                                    />
-                                                                </svg>
-                                                                {t.convocation}
-                                                            </button>
-                                                        )}
+                                                                    <svg
+                                                                        className="w-4 h-4 mr-1"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        viewBox="0 0 24 24"
+                                                                    >
+                                                                        <path
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            strokeWidth="2"
+                                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                                        />
+                                                                    </svg>
+                                                                    {t.convocation}
+                                                                </button>
+                                                            )}
 
                                                         {/* Bouton Signaler */}
                                                         <button
@@ -977,47 +977,47 @@ export default function EspaceEnseignants() {
         const monthNames =
             language === "fr"
                 ? [
-                      "Janvier",
-                      "Février",
-                      "Mars",
-                      "Avril",
-                      "Mai",
-                      "Juin",
-                      "Juillet",
-                      "Août",
-                      "Septembre",
-                      "Octobre",
-                      "Novembre",
-                      "Décembre",
-                  ]
+                    "Janvier",
+                    "Février",
+                    "Mars",
+                    "Avril",
+                    "Mai",
+                    "Juin",
+                    "Juillet",
+                    "Août",
+                    "Septembre",
+                    "Octobre",
+                    "Novembre",
+                    "Décembre",
+                ]
                 : [
-                      "يناير",
-                      "فبراير",
-                      "مارس",
-                      "أبريل",
-                      "مايو",
-                      "يونيو",
-                      "يوليو",
-                      "أغسطس",
-                      "سبتمبر",
-                      "أكتوبر",
-                      "نوفمبر",
-                      "ديسمبر",
-                  ];
+                    "يناير",
+                    "فبراير",
+                    "مارس",
+                    "أبريل",
+                    "مايو",
+                    "يونيو",
+                    "يوليو",
+                    "أغسطس",
+                    "سبتمبر",
+                    "أكتوبر",
+                    "نوفمبر",
+                    "ديسمبر",
+                ];
 
         // CORRECTED: Ensure Sunday is first day for French/Arabic
         const dayNames =
             language === "fr"
                 ? ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
                 : [
-                      "الأحد",
-                      "الاثنين",
-                      "الثلاثاء",
-                      "الأربعاء",
-                      "الخميس",
-                      "الجمعة",
-                      "السبت",
-                  ];
+                    "الأحد",
+                    "الاثنين",
+                    "الثلاثاء",
+                    "الأربعاء",
+                    "الخميس",
+                    "الجمعة",
+                    "السبت",
+                ];
 
         // Helper to get the actual date for debugging
         const getDebugInfo = () => {
@@ -1076,21 +1076,19 @@ export default function EspaceEnseignants() {
                         <div className="flex space-x-2">
                             <button
                                 onClick={() => setCalendarView("month")}
-                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                                    calendarView === "month"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-white text-blue-600 border-2 border-blue-600"
-                                }`}
+                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${calendarView === "month"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-white text-blue-600 border-2 border-blue-600"
+                                    }`}
                             >
                                 📅 {language === "fr" ? "Calendrier" : "تقويم"}
                             </button>
                             <button
                                 onClick={() => setCalendarView("list")}
-                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                                    calendarView === "list"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-white text-blue-600 border-2 border-blue-600"
-                                }`}
+                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${calendarView === "list"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-white text-blue-600 border-2 border-blue-600"
+                                    }`}
                             >
                                 📋 {language === "fr" ? "Liste" : "قائمة"}
                             </button>
@@ -1175,7 +1173,7 @@ export default function EspaceEnseignants() {
                                             <h3 className="text-2xl font-bold text-blue-800">
                                                 {
                                                     monthNames[
-                                                        currentMonth.getMonth()
+                                                    currentMonth.getMonth()
                                                     ]
                                                 }{" "}
                                                 {currentMonth.getFullYear()}
@@ -1224,15 +1222,14 @@ export default function EspaceEnseignants() {
                                             return (
                                                 <div
                                                     key={index}
-                                                    className={`min-h-[100px] border-2 rounded-lg p-2 transition-all cursor-pointer ${
-                                                        !dayData.isCurrentMonth
-                                                            ? "bg-gray-100 text-gray-400"
-                                                            : isToday
+                                                    className={`min-h-[100px] border-2 rounded-lg p-2 transition-all cursor-pointer ${!dayData.isCurrentMonth
+                                                        ? "bg-gray-100 text-gray-400"
+                                                        : isToday
                                                             ? "bg-yellow-100 border-yellow-500"
                                                             : hasExams
-                                                            ? "bg-blue-50 border-blue-300 hover:bg-blue-100"
-                                                            : "bg-white border-gray-300 hover:bg-gray-50"
-                                                    }`}
+                                                                ? "bg-blue-50 border-blue-300 hover:bg-blue-100"
+                                                                : "bg-white border-gray-300 hover:bg-gray-50"
+                                                        }`}
                                                     onClick={() =>
                                                         hasExams &&
                                                         setSelectedDate(
@@ -1241,11 +1238,10 @@ export default function EspaceEnseignants() {
                                                     }
                                                 >
                                                     <div
-                                                        className={`text-sm font-semibold mb-1 ${
-                                                            isToday
-                                                                ? "text-yellow-800"
-                                                                : ""
-                                                        }`}
+                                                        className={`text-sm font-semibold mb-1 ${isToday
+                                                            ? "text-yellow-800"
+                                                            : ""
+                                                            }`}
                                                     >
                                                         {dayData.day}
                                                         {isToday && (
@@ -1269,15 +1265,14 @@ export default function EspaceEnseignants() {
                                                                             key={
                                                                                 examIndex
                                                                             }
-                                                                            className={`text-xs p-1 rounded truncate ${
-                                                                                exam.type ===
+                                                                            className={`text-xs p-1 rounded truncate ${exam.type ===
                                                                                 "cc"
-                                                                                    ? "bg-green-500 text-white"
-                                                                                    : exam.type ===
-                                                                                      "examen"
+                                                                                ? "bg-green-500 text-white"
+                                                                                : exam.type ===
+                                                                                    "examen"
                                                                                     ? "bg-purple-500 text-white"
                                                                                     : "bg-orange-500 text-white"
-                                                                            }`}
+                                                                                }`}
                                                                             title={`${exam.module} - ${exam.start_time}`}
                                                                         >
                                                                             {
@@ -1293,18 +1288,18 @@ export default function EspaceEnseignants() {
                                                                 )}
                                                             {dayData.exams
                                                                 .length > 3 && (
-                                                                <div className="text-xs text-blue-600 font-semibold">
-                                                                    +
-                                                                    {dayData
-                                                                        .exams
-                                                                        .length -
-                                                                        3}{" "}
-                                                                    {language ===
-                                                                    "fr"
-                                                                        ? "autre(s)"
-                                                                        : "آخر"}
-                                                                </div>
-                                                            )}
+                                                                    <div className="text-xs text-blue-600 font-semibold">
+                                                                        +
+                                                                        {dayData
+                                                                            .exams
+                                                                            .length -
+                                                                            3}{" "}
+                                                                        {language ===
+                                                                            "fr"
+                                                                            ? "autre(s)"
+                                                                            : "آخر"}
+                                                                    </div>
+                                                                )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -1378,15 +1373,14 @@ export default function EspaceEnseignants() {
                                                                 </p>
                                                                 <p className="text-sm">
                                                                     <span
-                                                                        className={`px-2 py-1 rounded text-white ${
-                                                                            exam.type ===
+                                                                        className={`px-2 py-1 rounded text-white ${exam.type ===
                                                                             "cc"
-                                                                                ? "bg-green-500"
-                                                                                : exam.type ===
-                                                                                  "examen"
+                                                                            ? "bg-green-500"
+                                                                            : exam.type ===
+                                                                                "examen"
                                                                                 ? "bg-purple-500"
                                                                                 : "bg-orange-500"
-                                                                        }`}
+                                                                            }`}
                                                                     >
                                                                         {getExamTypeLabel(
                                                                             exam.type
@@ -1493,23 +1487,21 @@ export default function EspaceEnseignants() {
                                                 (exam, index) => (
                                                     <tr
                                                         key={exam.id || index}
-                                                        className={`${
-                                                            index % 2 === 0
-                                                                ? "bg-blue-50"
-                                                                : "bg-white"
-                                                        } hover:bg-blue-100 transition-colors`}
+                                                        className={`${index % 2 === 0
+                                                            ? "bg-blue-50"
+                                                            : "bg-white"
+                                                            } hover:bg-blue-100 transition-colors`}
                                                     >
                                                         <td className="px-6 py-3 border-b border-blue-200">
                                                             <span
-                                                                className={`px-3 py-1 rounded-full text-sm font-bold ${
-                                                                    exam.type ===
+                                                                className={`px-3 py-1 rounded-full text-sm font-bold ${exam.type ===
                                                                     "cc"
-                                                                        ? "bg-blue-100 text-blue-800 border border-blue-300"
-                                                                        : exam.type ===
-                                                                          "examen"
+                                                                    ? "bg-blue-100 text-blue-800 border border-blue-300"
+                                                                    : exam.type ===
+                                                                        "examen"
                                                                         ? "bg-purple-100 text-purple-800 border border-purple-300"
                                                                         : "bg-orange-100 text-orange-800 border border-orange-300"
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 {getExamTypeLabel(
                                                                     exam.type
@@ -1673,9 +1665,8 @@ export default function EspaceEnseignants() {
     /* ================= MAIN RENDER ================= */
     return (
         <div
-            className={`flex flex-col min-h-screen bg-[#E6EEF7] ${
-                language === "ar" ? "rtl" : "ltr"
-            }`}
+            className={`flex flex-col min-h-screen bg-[#E6EEF7] ${language === "ar" ? "rtl" : "ltr"
+                }`}
         >
             <div className="flex-grow relative">
                 <img
@@ -1684,9 +1675,13 @@ export default function EspaceEnseignants() {
                     className="absolute top-4 left-4 w-14 h-14 object-contain logo-hover"
                 />
 
-                <h1 className="text-2xl font-semibold text-center pt-6 mb-6 text-[#0B2844] font-montserrat fade-in">
+                <h1
+                    className="text-2xl font-semibold text-center pt-6 mb-6 text-[#0B2844] fade-in"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
                     {t.department}
                 </h1>
+
 
                 {teacherData && (
                     <div
@@ -1718,49 +1713,55 @@ export default function EspaceEnseignants() {
                 <div className="mt-4 border-t border-[#3A5377] w-full fade-in"></div>
 
                 <div
-                    className={`mt-12 flex ${
-                        language === "ar"
-                            ? "justify-end mr-8"
-                            : "justify-start ml-8"
-                    }`}
+                    className={`mt-12 flex ${language === "ar"
+                        ? "justify-end mr-8"
+                        : "justify-start ml-8"
+                        }`}
                 >
-                    <p className="text-[#0B2844] text-lg font-semibold font-montserrat fade-in">
+                    <p
+                        className="text-[#0B2844] text-lg font-semibold fade-in"
+                        style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
                         {t.teacherSpace}
                     </p>
+
                 </div>
 
                 {/* Navigation Tabs - 3 BUTTONS */}
                 <div className="flex justify-center mt-8 space-x-4 fade-in">
                     <button
                         onClick={() => setCurrentView("schedule")}
-                        className={`px-8 py-3 rounded-lg font-montserrat font-semibold transition-all hover-scale ${
-                            currentView === "schedule"
-                                ? "bg-[#3A5377] text-white shadow-lg"
-                                : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
-                        }`}
+                        className={`px-8 py-3 rounded-lg font-semibold transition-all hover-scale ${currentView === "schedule"
+                            ? "bg-[#3A5377] text-white shadow-lg"
+                            : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
+                            }`}
+                        style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                         {t.examSchedule}
                     </button>
+
                     <button
                         onClick={() => setCurrentView("responsable")}
-                        className={`px-8 py-3 rounded-lg font-montserrat font-semibold transition-all hover-scale ${
-                            currentView === "responsable"
-                                ? "bg-[#3A5377] text-white shadow-lg"
-                                : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
-                        }`}
+                        className={`px-8 py-3 rounded-lg font-semibold transition-all hover-scale ${currentView === "responsable"
+                            ? "bg-[#3A5377] text-white shadow-lg"
+                            : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
+                            }`}
+                        style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                         {t.responsableExams}
                     </button>
+
                     <button
                         onClick={() => setCurrentView("profile")}
-                        className={`px-8 py-3 rounded-lg font-montserrat font-semibold transition-all hover-scale ${
-                            currentView === "profile"
-                                ? "bg-[#3A5377] text-white shadow-lg"
-                                : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
-                        }`}
+                        className={`px-8 py-3 rounded-lg font-semibold transition-all hover-scale ${currentView === "profile"
+                            ? "bg-[#3A5377] text-white shadow-lg"
+                            : "bg-[#EEF2F8] text-[#0B2844] border-2 border-[#3A5377] hover:bg-[#3A5377] hover:text-white"
+                            }`}
+                        style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                         {t.myProfile}
                     </button>
+
                 </div>
 
                 {/* Content - 3 VIEWS */}

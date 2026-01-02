@@ -22,9 +22,13 @@ export default function Summary() {
                             className="w-12 h-12 object-contain"
                         />
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-800">
+                            <h1
+                                className="text-2xl font-bold text-slate-800"
+                                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                            >
                                 UABT
                             </h1>
+
                             <p className="text-sm text-slate-700">
                                 Département Informatique
                             </p>
@@ -46,9 +50,13 @@ export default function Summary() {
             {/* HERO */}
             <section className="py-20 text-center">
                 <div className="max-w-4xl mx-auto px-6">
-                    <h2 className="text-4xl font-bold text-slate-800 mb-6">
+                    <h2
+                        className="text-4xl font-bold text-slate-800 mb-6"
+                        style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
                         Bienvenue au Département Informatique
                     </h2>
+
                     <p className="text-lg text-slate-700">
                         La plateforme UABT vous permet de gérer efficacement vos
                         activités académiques : suivi des notes, planning des
@@ -74,9 +82,13 @@ export default function Summary() {
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <Users className="w-8 h-8 text-blue-600" />
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3
+                                    className="text-2xl font-bold text-slate-800"
+                                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                                >
                                     Espace Étudiants
                                 </h3>
+
                             </div>
                             <ul className="space-y-3 text-slate-700">
                                 <li>• Planning des cours (CC, EXAM, RATT)</li>
@@ -101,7 +113,9 @@ export default function Summary() {
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <BookOpen className="w-8 h-8 text-green-600" />
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3 className="text-2xl font-bold text-slate-800"
+                                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                                >
                                     Espace Enseignants
                                 </h3>
                             </div>
@@ -127,7 +141,9 @@ export default function Summary() {
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <Shield className="w-8 h-8 text-purple-600" />
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3 className="text-2xl font-bold text-slate-800"
+                                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                                >
                                     Espace Admin
                                 </h3>
                             </div>

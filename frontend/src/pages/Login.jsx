@@ -19,7 +19,7 @@ export default function Login() {
 
         try {
             console.log("🔐 Attempting login...");
-            
+
             const response = await api.post("/Login", {
                 matricule,
                 password,
@@ -68,13 +68,13 @@ export default function Login() {
             {/* Subtle professional blob backgrounds */}
             <div className="blob blob-1"></div>
             <div className="blob blob-2"></div>
-            
+
             {/* University-themed floating elements */}
             <div className="themed-shape shape-book">📚</div>
             <div className="themed-shape shape-computer">💻</div>
             <div className="themed-shape shape-graduation">🎓</div>
             <div className="themed-shape shape-study">📖</div>
-            
+
             <img
                 src="/logouni.png"
                 alt="UABT Logo"
@@ -82,13 +82,19 @@ export default function Login() {
             />
 
             <div className="login-card">
-                <h1 className="text-2xl font-semibold text-center text-[#0B2844]">
+                <h1 className="text-2xl font-bold text-slate-800 text-center"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
                     UABT
                 </h1>
 
-                <p className="text-center text-[#0B2844] mb-6">
+                <p
+                    className="text-center text-[#0B2844] mb-6"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
                     Departement Informatique
                 </p>
+
 
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <input
