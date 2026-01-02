@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
-import "./exam-Management.css";
 import ExamCalendar from "./ExamCalendar";
+import "./exam-Management.css";
 import ConvocationModal from "./ConvocationModal";
 import NotifyTeacherModal from "./NotifyTeacherModal";
 
 const ExamManagement = () => {
-    // Modal states
     const [showAddExamModal, setShowAddExamModal] = useState(false);
     const [showEditExamModal, setShowEditExamModal] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -45,19 +44,25 @@ const ExamManagement = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
-    const emptyExam = useMemo(() => ({
-        type: "examen",
-        module: "",
-        teacher: "",
-        room: "",
-        specialite: "",
-        niveau: "",
-        group: "",
-        semester: "",
-        date: "",
-        startTime: "",
-        endTime: "",
-    }), []);
+    // View toggle state
+    const [viewMode, setViewMode] = useState("table");
+
+    const emptyExam = useMemo(
+        () => ({
+            type: "examen",
+            module: "",
+            teacher: "",
+            room: "",
+            specialite: "",
+            niveau: "",
+            group: "",
+            semester: "",
+            date: "",
+            startTime: "",
+            endTime: "",
+        }),
+        []
+    );
 
     const [newExam, setNewExam] = useState(emptyExam);
     const [editExam, setEditExam] = useState(emptyExam);
@@ -92,7 +97,10 @@ const ExamManagement = () => {
                 const allExams = [
                     ...res.data.exams.map((e) => ({ ...e, type: "examen" })),
                     ...res.data.ccs.map((e) => ({ ...e, type: "cc" })),
-                    ...res.data.rattrapages.map((e) => ({ ...e, type: "rattrapage" })),
+                    ...res.data.rattrapages.map((e) => ({
+                        ...e,
+                        type: "rattrapage",
+                    })),
                 ];
                 setExams(allExams);
             }
@@ -124,17 +132,24 @@ const ExamManagement = () => {
 
     const fetchAcademicData = async () => {
         try {
-            const [levelsRes, specialtiesRes, groupsRes, semestersRes] = await Promise.all([
-                api.get("/levels"),
-                api.get("/specialties"),
-                api.get("/groups"),
-                api.get("/semesters"),
-            ]);
+            const [levelsRes, specialtiesRes, groupsRes, semestersRes] =
+                await Promise.all([
+                    api.get("/levels"),
+                    api.get("/specialties"),
+                    api.get("/groups"),
+                    api.get("/semesters"),
+                ]);
 
             setLevels(levelsRes.data.levels || levelsRes.data.data || []);
-            setSpecialties(specialtiesRes.data.specialties || specialtiesRes.data.data || []);
+            setSpecialties(
+                specialtiesRes.data.specialties ||
+                    specialtiesRes.data.data ||
+                    []
+            );
             setGroups(groupsRes.data.groups || groupsRes.data.data || []);
-            setSemesters(semestersRes.data.semesters || semestersRes.data.data || []);
+            setSemesters(
+                semestersRes.data.semesters || semestersRes.data.data || []
+            );
         } catch (err) {
             console.error("Fetch academic data error:", err);
             setLevels([]);
@@ -158,23 +173,12 @@ const ExamManagement = () => {
     };
 
     /* ================= ROOM AVAILABILITY ================= */
-    useEffect(() => {
-        if (newExam.date && newExam.startTime && newExam.endTime) {
-            fetchAvailableRoomsForNew();
-        } else {
+    const fetchAvailableRoomsForNew = useCallback(async () => {
+        if (!newExam.date || !newExam.startTime || !newExam.endTime) {
             setAvailableRoomsNew(allRooms);
+            return;
         }
-    }, [newExam.date, newExam.startTime, newExam.endTime, allRooms]);
 
-    useEffect(() => {
-        if (selectedExam && editExam.date && editExam.startTime && editExam.endTime) {
-            fetchAvailableRoomsForEdit();
-        } else if (selectedExam) {
-            setAvailableRoomsEdit(allRooms);
-        }
-    }, [editExam.date, editExam.startTime, editExam.endTime, selectedExam, allRooms]);
-
-    const fetchAvailableRoomsForNew = async () => {
         try {
             const res = await api.get("/salles/available", {
                 params: {
@@ -188,20 +192,18 @@ const ExamManagement = () => {
             console.error("Fetch available rooms (new) error:", err);
             setAvailableRoomsNew(allRooms);
         }
-    };
+    }, [newExam.date, newExam.startTime, newExam.endTime, allRooms]);
 
-    useEffect(() => {
-        if (newExam.date && newExam.startTime && newExam.endTime) {
-            fetchAvailableRoomsForNew();
+    const fetchAvailableRoomsForEdit = useCallback(async () => {
+        if (
+            !selectedExam ||
+            !editExam.date ||
+            !editExam.startTime ||
+            !editExam.endTime
+        ) {
+            setAvailableRoomsEdit(allRooms);
+            return;
         }
-        if (showAddExamModal) {
-            fetchTeachers();
-            fetchModules();
-        }
-    }, [newExam.date, newExam.startTime, newExam.endTime, showAddExamModal]);
-
-    const fetchAvailableRoomsForEdit = async () => {
-        if (!selectedExam) return;
 
         try {
             const res = await api.get("/salles/available", {
@@ -217,180 +219,130 @@ const ExamManagement = () => {
             console.error("Fetch available rooms (edit) error:", err);
             setAvailableRoomsEdit(allRooms);
         }
-    };
-
-    /* ================= AUTO ASSIGN TEACHER ================= */
-    const handleAutoAssignTeacher = async (isEdit = false) => {
-        const examData = isEdit ? editExam : newExam;
-        
-        if (!examData.date || !examData.startTime || !examData.endTime) {
-            alert("⚠️ Veuillez d'abord sélectionner la date et l'heure de l'examen.");
-            return;
-        }
-
-        setAutoAssignLoading(true);
-        setConflictError(null);
-
-        if (showEditExamModal) {
-            fetchTeachers();
-            fetchModules();
-        }
     }, [
         editExam.date,
         editExam.startTime,
         editExam.endTime,
         selectedExam,
-        showEditExamModal,
+        allRooms,
     ]);
 
-    /* ================= CRUD ================= */
-    const checkTimeOverlap = (start1, end1, start2, end2) => {
-        return start1 < end2 && start2 < end1;
-    };
+    useEffect(() => {
+        fetchAvailableRoomsForNew();
+    }, [fetchAvailableRoomsForNew]);
 
+    useEffect(() => {
+        fetchAvailableRoomsForEdit();
+    }, [fetchAvailableRoomsForEdit]);
+
+    /* ================= AUTO ASSIGN TEACHER - FIXED ================= */
+    const handleAutoAssignTeacher = useCallback(
+        async (isEditMode) => {
+            const exam = isEditMode ? editExam : newExam;
+
+            // FIXED: Check for module selection
+            if (!exam.module) {
+                alert("⚠️ Veuillez d'abord sélectionner un module");
+                return;
+            }
+
+            if (!exam.date || !exam.startTime || !exam.endTime) {
+                alert(
+                    "⚠️ Veuillez d'abord sélectionner la date et l'heure de l'examen"
+                );
+                return;
+            }
+
+            setAutoAssignLoading(true);
+            setConflictError(null);
+
+            try {
+                // FIXED: Include module in params
+                const params = {
+                    date: exam.date,
+                    start_time: exam.startTime,
+                    end_time: exam.endTime,
+                    module: exam.module, // ADDED: Send module name
+                };
+
+                if (isEditMode && selectedExam) {
+                    params.exclude_exam_id = selectedExam.id;
+                }
+
+                console.log(
+                    "🔍 Fetching available teachers with params:",
+                    params
+                );
+
+                const res = await api.get("/exams/available-teachers", {
+                    params,
+                });
+
+                console.log("✅ Available teachers response:", res.data);
+
+                if (res.data.success && res.data.available_teachers) {
+                    const available = res.data.available_teachers;
+                    setAvailableTeachers(available);
+
+                    if (available.length > 0) {
+                        const teacher = available[0];
+                        if (isEditMode) {
+                            setEditExam({ ...editExam, teacher: teacher.name });
+                        } else {
+                            setNewExam({ ...newExam, teacher: teacher.name });
+                        }
+                        alert(
+                            `✅ Enseignant disponible trouvé : ${
+                                teacher.name
+                            }\n${
+                                available.length - 1
+                            } autre(s) enseignant(s) disponible(s).`
+                        );
+                    } else {
+                        alert(
+                            "❌ Aucun enseignant disponible pour ce créneau.\n\nTous les enseignants sont soit occupés, soit responsables de ce module."
+                        );
+                    }
+                }
+            } catch (err) {
+                console.error("❌ Auto-assign error:", err);
+                console.error("Error details:", err.response?.data);
+                const message =
+                    err?.response?.data?.message ||
+                    "Erreur lors de la recherche d'enseignant disponible";
+                alert(`❌ ${message}`);
+                setConflictError(message);
+            } finally {
+                setAutoAssignLoading(false);
+            }
+        },
+        [newExam, editExam, selectedExam]
+    );
+
+    /* ================= CRUD ================= */
     const handleAddExam = async () => {
         try {
-            const payload = {
-                date: examData.date,
-                start_time: examData.startTime,
-                end_time: examData.endTime,
-            };
-
-            if (isEdit && examData.teacher) {
-                payload.exclude_teacher = examData.teacher;
+            if (!newExam.module) {
+                alert("Veuillez sélectionner un module pour cet examen.");
+                return;
             }
-
-            const response = await api.post("/exams/auto-assign", payload);
-            
-            if (response.data.success && response.data.teacher) {
-                if (isEdit) {
-                    setEditExam(prev => ({ ...prev, teacher: response.data.teacher }));
-                } else {
-                    setNewExam(prev => ({ ...prev, teacher: response.data.teacher }));
-                }
-                
-                alert(`✅ Enseignant affecté: ${response.data.teacher}`);
-            } else {
-                alert(response.data.message || "❌ Aucun enseignant disponible");
-            }
-        } catch (err) {
-            console.error("Auto assign error:", err);
-            const errorMessage = err.response?.data?.message || "❌ Erreur lors de l'affectation automatique";
-            alert(errorMessage);
-        } finally {
-            setAutoAssignLoading(false);
-        }
-    };
-
-    /* ================= GET AVAILABLE TEACHERS ================= */
-    const fetchAvailableTeachersForSlot = async (examData, isEdit = false) => {
-        try {
-            const params = {
-                date: examData.date,
-                start_time: examData.startTime,
-                end_time: examData.endTime,
-            };
-
-            if (isEdit && examData.teacher) {
-                params.exclude_teacher = examData.teacher;
-            }
-
-            const response = await api.get("/exams/available-teachers", { params });
-            
-            if (response.data.success) {
-                setAvailableTeachers(response.data.available_teachers || []);
-            if (!availableRoomsNew.some(r => r.name === newExam.room)) {
-                alert("Erreur : La salle sélectionnée n'est pas disponible pour cette date et heure.");
+            if (!newExam.room) {
+                alert(
+                    "Veuillez sélectionner une salle disponible pour cet examen."
+                );
                 return;
             }
             if (!newExam.semester) {
                 alert("Veuillez sélectionner un semestre.");
                 return;
             }
-        } catch (err) {
-            console.error("Fetch available teachers error:", err);
-            setAvailableTeachers([]);
-        }
-    };
+            if (!newExam.teacher) {
+                alert("Veuillez sélectionner un enseignant.");
+                return;
+            }
 
-    // Fetch available teachers when time changes
-    useEffect(() => {
-        if (newExam.date && newExam.startTime && newExam.endTime) {
-            const timer = setTimeout(() => {
-                fetchAvailableTeachersForSlot(newExam, false);
-            }, 500);
-            return () => clearTimeout(timer);
-        } else {
-            setAvailableTeachers([]);
-        }
-    }, [newExam.date, newExam.startTime, newExam.endTime]);
-
-    useEffect(() => {
-        if (selectedExam && editExam.date && editExam.startTime && editExam.endTime) {
-            const timer = setTimeout(() => {
-                fetchAvailableTeachersForSlot(editExam, true);
-            }, 500);
-            return () => clearTimeout(timer);
-        }
-    }, [editExam.date, editExam.startTime, editExam.endTime, selectedExam]);
-
-    /* ================= CRUD OPERATIONS ================= */
-    const validateExam = (examData) => {
-        const errors = [];
-        
-        if (!examData.module) errors.push("Module");
-        if (!examData.teacher) errors.push("Enseignant");
-        if (!examData.room) errors.push("Salle");
-        if (!examData.semester) errors.push("Semestre");
-        if (!examData.date) errors.push("Date");
-        if (!examData.startTime) errors.push("Heure de début");
-        if (!examData.endTime) errors.push("Heure de fin");
-        
-        if (errors.length > 0) {
-            alert("⚠️ Champs obligatoires manquants : " + errors.join(", "));
-            return false;
-        }
-        
-        if (examData.startTime >= examData.endTime) {
-            alert("⚠️ L'heure de fin doit être après l'heure de début");
-            return false;
-        }
-        
-        return true;
-    };
-
-    const handleAddExam = async () => {
-        if (!validateExam(newExam)) return;
-
-        try {
             setLoading(true);
-            setConflictError(null);
 
-            const selectedModule = modules.find(m => m.name === newExam.module);
-            if (selectedModule && selectedModule.teacher_name === newExam.teacher) {
-                alert("Erreur : Le responsable du module ne peut pas être le surveillant.");
-                return;
-            }
-
-            const teacherExamsOnDate = exams.filter(
-                e => e.teacher === newExam.teacher && e.date === newExam.date
-            );
-
-            const hasConflict = teacherExamsOnDate.some(e => 
-                checkTimeOverlap(
-                    newExam.startTime,
-                    newExam.endTime,
-                    e.start_time || e.startTime,
-                    e.end_time || e.endTime
-                )
-            );
-
-            if (hasConflict) {
-                alert("Erreur : L'enseignant a déjà un examen prévu à cette heure. Veuillez choisir une autre heure ou un autre enseignant.");
-                return;
-            }
-
-            // Backend automatically creates notification
             const response = await api.post("/exams", {
                 type: newExam.type,
                 module: newExam.module,
@@ -405,35 +357,25 @@ const ExamManagement = () => {
                 semester: newExam.semester,
             });
 
+            console.log("✅ Exam created successfully:", response.data);
+
             if (response.data.success) {
                 alert("✅ Examen ajouté avec succès!");
                 setShowAddExamModal(false);
                 setNewExam(emptyExam);
                 setAvailableTeachers([]);
+                setConflictError(null);
                 await fetchExams();
             }
         } catch (err) {
-            console.error("Add exam error:", err);
-            const errorMessage = err.response?.data?.message || "❌ Erreur lors de l'ajout de l'examen";
-            setConflictError(errorMessage);
-            alert(errorMessage);
-        } finally {
-            setLoading(false);
-            console.log("✅ Exam created successfully:", response.data);
-
-            setShowAddExamModal(false);
-            setNewExam(emptyExam);
-            fetchExams();
-
-            // Notify other tabs (teachers) that exams changed
-            localStorage.setItem("examUpdate", Date.now().toString());
-            alert("Examen ajouté avec succès!");
-        } catch (err) {
-            console.error("❌ Create error:", err);
+            console.error("Create error", err);
             const message =
                 err?.response?.data?.message ||
                 "Erreur lors de la création de l'examen";
             alert(message);
+            setConflictError(message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -458,12 +400,7 @@ const ExamManagement = () => {
     };
 
     const handleUpdateExam = async () => {
-        if (!validateExam(editExam)) return;
-
         try {
-            setLoading(true);
-            setConflictError(null);
-
             if (!editExam.module) {
                 alert("Veuillez sélectionner un module pour cet examen.");
                 return;
@@ -474,43 +411,17 @@ const ExamManagement = () => {
                 );
                 return;
             }
-            if (!availableRoomsEdit.some(r => r.name === editExam.room)) {
-                alert("Erreur : La salle sélectionnée n'est pas disponible pour cette date et heure.");
-                return;
-            }
             if (!editExam.semester) {
                 alert("Veuillez sélectionner un semestre.");
                 return;
             }
-
-            const selectedModule = modules.find(m => m.name === editExam.module);
-            if (selectedModule && selectedModule.teacher_name === editExam.teacher) {
-                alert("Erreur : Le responsable du module ne peut pas être le surveillant.");
+            if (!editExam.teacher) {
+                alert("Veuillez sélectionner un enseignant.");
                 return;
             }
 
-            const teacherExamsOnDate = exams.filter(
-                e => 
-                    e.teacher === editExam.teacher && 
-                    e.date === editExam.date && 
-                    e.id !== selectedExam.id
-            );
+            setLoading(true);
 
-            const hasConflict = teacherExamsOnDate.some(e => 
-                checkTimeOverlap(
-                    editExam.startTime,
-                    editExam.endTime,
-                    e.start_time || e.startTime,
-                    e.end_time || e.endTime
-                )
-            );
-
-            if (hasConflict) {
-                alert("Erreur : L'enseignant a déjà un examen prévu à cette heure. Veuillez choisir une autre heure ou un autre enseignant.");
-                return;
-            }
-
-            // Backend automatically creates notification
             const response = await api.put(`/exams/${selectedExam.id}`, {
                 type: editExam.type,
                 module: editExam.module,
@@ -525,53 +436,60 @@ const ExamManagement = () => {
                 semester: editExam.semester,
             });
 
+            console.log("✅ Exam updated successfully:", response.data);
+
             if (response.data.success) {
                 alert("✅ Examen modifié avec succès!");
                 setShowEditExamModal(false);
                 setSelectedExam(null);
                 setAvailableTeachers([]);
+                setConflictError(null);
                 await fetchExams();
             }
         } catch (err) {
-            console.error("Update error:", err);
-            const errorMessage = err.response?.data?.message || "❌ Erreur lors de la modification";
-            setConflictError(errorMessage);
-            alert(errorMessage);
-        } finally {
-            setLoading(false);
-            console.log("✅ Exam updated successfully:", response.data);
-
-            setShowEditExamModal(false);
-            setSelectedExam(null);
-            fetchExams();
-
-            localStorage.setItem("examUpdate", Date.now().toString());
-            alert("Examen modifié avec succès!");
-        } catch (err) {
-            console.error("❌ Update error:", err);
+            console.error("Update error", err);
             const message =
                 err?.response?.data?.message ||
                 "Erreur lors de la modification de l'examen";
             alert(message);
+            setConflictError(message);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleDeleteExam = async () => {
         try {
-            // Backend automatically creates notification before deletion
-            const response = await api.delete(`/exams/${selectedExam.id}`);
-            
-            console.log("✅ Exam deleted successfully:", response.data);
+            setLoading(true);
+            await api.delete(`/exams/${selectedExam.id}`);
 
+            alert("Examen supprimé avec succès!");
             setShowDeleteConfirmModal(false);
             setSelectedExam(null);
-            fetchExams();
 
             localStorage.setItem("examUpdate", Date.now().toString());
-            alert("Examen supprimé avec succès!");
+            await fetchExams();
         } catch (err) {
-            console.error("❌ Delete error:", err);
+            console.error("Delete error", err);
             alert("Erreur lors de la suppression de l'examen");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleNotify = async (exam) => {
+        try {
+            const response = await api.post(`/exams/${exam.id}/notify`);
+
+            if (response.data.success) {
+                alert(`📧 Notification envoyée à ${exam.teacher} avec succès!`);
+            }
+        } catch (err) {
+            console.error("Notify error", err);
+            const message =
+                err?.response?.data?.message ||
+                "Erreur lors de l'envoi de la notification";
+            alert(message);
         }
     };
 
@@ -579,14 +497,20 @@ const ExamManagement = () => {
     const filteredExams = useMemo(() => {
         return exams.filter((e) => {
             const matchesSearch =
-                (e.module?.toLowerCase() || '').includes(search.toLowerCase()) ||
-                (e.teacher?.toLowerCase() || '').includes(search.toLowerCase());
+                (e.module?.toLowerCase() || "").includes(
+                    search.toLowerCase()
+                ) ||
+                (e.teacher?.toLowerCase() || "").includes(search.toLowerCase());
 
             const matchesType = filterType ? e.type === filterType : true;
-            const matchesTeacher = filterTeacher ? e.teacher === filterTeacher : true;
+            const matchesTeacher = filterTeacher
+                ? e.teacher === filterTeacher
+                : true;
             const matchesRoom = filterRoom ? e.room === filterRoom : true;
 
-            return matchesSearch && matchesType && matchesTeacher && matchesRoom;
+            return (
+                matchesSearch && matchesType && matchesTeacher && matchesRoom
+            );
         });
     }, [exams, search, filterType, filterTeacher, filterRoom]);
 
@@ -599,187 +523,257 @@ const ExamManagement = () => {
         );
     }, [filteredExams, currentPage, itemsPerPage]);
 
-    const examTypes = useMemo(() => ({
-        examen: paginatedExams.filter((e) => e.type === "examen"),
-        cc: paginatedExams.filter((e) => e.type === "cc"),
-        rattrapage: paginatedExams.filter((e) => e.type === "rattrapage"),
-    }), [paginatedExams]);
+    const examTypes = useMemo(
+        () => ({
+            examen: paginatedExams.filter((e) => e.type === "examen"),
+            cc: paginatedExams.filter((e) => e.type === "cc"),
+            rattrapage: paginatedExams.filter((e) => e.type === "rattrapage"),
+        }),
+        [paginatedExams]
+    );
 
     return (
         <div className="exam-management">
             {(loading || autoAssignLoading) && (
                 <div className="loader-overlay">
                     <div className="loader"></div>
-                    <div style={{ marginTop: '10px', color: '#3b82f6' }}>
-                        {autoAssignLoading ? "Recherche d'enseignant disponible..." : "Chargement..."}
+                    <div style={{ marginTop: "10px", color: "#3b82f6" }}>
+                        {autoAssignLoading
+                            ? "Recherche d'enseignant disponible..."
+                            : "Chargement..."}
                     </div>
                 </div>
             )}
 
             <div className="exam-header">
                 <h1>📚 Planning des Examens</h1>
-                <button 
-                    className="add-exam-btn"
-                    onClick={() => setShowAddExamModal(true)}
-                    disabled={loading}
-                >
-                    <span>+</span> Ajouter un examen
-                </button>
+                <div style={{ display: "flex", gap: "10px" }}>
+                    <div className="view-toggle">
+                        <button
+                            className={`view-toggle-btn ${
+                                viewMode === "table" ? "active" : ""
+                            }`}
+                            onClick={() => setViewMode("table")}
+                            title="Vue tableau"
+                        >
+                            📋 Tableau
+                        </button>
+                        <button
+                            className={`view-toggle-btn ${
+                                viewMode === "calendar" ? "active" : ""
+                            }`}
+                            onClick={() => setViewMode("calendar")}
+                            title="Vue calendrier"
+                        >
+                            📅 Calendrier
+                        </button>
+                    </div>
+
+                    <button
+                        className="add-exam-btn"
+                        onClick={() => setShowAddExamModal(true)}
+                        disabled={loading}
+                    >
+                        <span>+</span> Ajouter un examen
+                    </button>
+                </div>
             </div>
 
-            <div className="filters-section">
-                <div className="filters">
-                    <div className="filter-group">
-                        <label>🔍 Recherche</label>
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="Module ou enseignant..."
-                            value={search}
-                            onChange={(e) => {
-                                setSearch(e.target.value);
-                                setCurrentPage(1);
+            {viewMode === "calendar" ? (
+                <ExamCalendar exams={filteredExams} />
+            ) : (
+                <>
+                    <div className="filters-section">
+                        <div className="filters">
+                            <div className="filter-group">
+                                <label>🔍 Recherche</label>
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Module ou enseignant..."
+                                    value={search}
+                                    onChange={(e) => {
+                                        setSearch(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div className="filter-group">
+                                <label>📋 Type</label>
+                                <select
+                                    value={filterType}
+                                    onChange={(e) => {
+                                        setFilterType(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    disabled={loading}
+                                >
+                                    <option value="">Tous les types</option>
+                                    <option value="examen">Examen</option>
+                                    <option value="cc">Contrôle Continu</option>
+                                    <option value="rattrapage">
+                                        Rattrapage
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div className="filter-group">
+                                <label>👨‍🏫 Enseignant</label>
+                                <select
+                                    value={filterTeacher}
+                                    onChange={(e) => {
+                                        setFilterTeacher(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    disabled={loading}
+                                >
+                                    <option value="">
+                                        Tous les enseignants
+                                    </option>
+                                    {teachers.map((t) => (
+                                        <option
+                                            key={t.id || t._id}
+                                            value={t.name}
+                                        >
+                                            {t.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="filter-group">
+                                <label>🏫 Salle</label>
+                                <select
+                                    value={filterRoom}
+                                    onChange={(e) => {
+                                        setFilterRoom(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    disabled={loading}
+                                >
+                                    <option value="">Toutes les salles</option>
+                                    {allRooms.map((r) => (
+                                        <option
+                                            key={r.id || r._id}
+                                            value={r.name}
+                                        >
+                                            {r.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="exam-sections">
+                        <Section
+                            title={`📝 Examens (${
+                                filteredExams.filter((e) => e.type === "examen")
+                                    .length
+                            })`}
+                            data={examTypes.examen}
+                            onEdit={handleEditClick}
+                            onDelete={(e) => {
+                                setSelectedExam(e);
+                                setShowDeleteConfirmModal(true);
                             }}
-                            disabled={loading}
+                            loading={loading}
+                            onNotify={(exam) =>
+                                setSelectedExamForNotification(exam)
+                            }
                         />
-                    </div>
 
-                    <div className="filter-group">
-                        <label>📋 Type</label>
-                        <select
-                            value={filterType}
-                            onChange={(e) => {
-                                setFilterType(e.target.value);
-                                setCurrentPage(1);
+                        <Section
+                            title={`✏️ Contrôles Continus (${
+                                filteredExams.filter((e) => e.type === "cc")
+                                    .length
+                            })`}
+                            data={examTypes.cc}
+                            onEdit={handleEditClick}
+                            onDelete={(e) => {
+                                setSelectedExam(e);
+                                setShowDeleteConfirmModal(true);
                             }}
-                            disabled={loading}
-                        >
-                            <option value="">Tous les types</option>
-                            <option value="examen">Examen</option>
-                            <option value="cc">Contrôle Continu</option>
-                            <option value="rattrapage">Rattrapage</option>
-                        </select>
-                    </div>
+                            loading={loading}
+                            onNotify={(exam) =>
+                                setSelectedExamForNotification(exam)
+                            }
+                        />
 
-                    <div className="filter-group">
-                        <label>👨‍🏫 Enseignant</label>
-                        <select
-                            value={filterTeacher}
-                            onChange={(e) => {
-                                setFilterTeacher(e.target.value);
-                                setCurrentPage(1);
+                        <Section
+                            title={`🔄 Rattrapages (${
+                                filteredExams.filter(
+                                    (e) => e.type === "rattrapage"
+                                ).length
+                            })`}
+                            data={examTypes.rattrapage}
+                            onEdit={handleEditClick}
+                            onDelete={(e) => {
+                                setSelectedExam(e);
+                                setShowDeleteConfirmModal(true);
                             }}
-                            disabled={loading}
-                        >
-                            <option value="">Tous les enseignants</option>
-                            {teachers.map(t => (
-                                <option key={t.id || t._id} value={t.name}>
-                                    {t.name}
-                                </option>
-                            ))}
-                        </select>
+                            loading={loading}
+                            onNotify={(exam) =>
+                                setSelectedExamForNotification(exam)
+                            }
+                        />
+
+                        {selectedExamForConvocation && (
+                            <ConvocationModal
+                                exam={selectedExamForConvocation}
+                                onClose={() =>
+                                    setSelectedExamForConvocation(null)
+                                }
+                            />
+                        )}
+                        {selectedExamForNotification && (
+                            <NotifyTeacherModal
+                                exam={selectedExamForNotification}
+                                onClose={() =>
+                                    setSelectedExamForNotification(null)
+                                }
+                                onSuccess={() => {
+                                    console.log(
+                                        "Notification sent successfully!"
+                                    );
+                                }}
+                            />
+                        )}
                     </div>
 
-                    <div className="filter-group">
-                        <label>🏫 Salle</label>
-                        <select
-                            value={filterRoom}
-                            onChange={(e) => {
-                                setFilterRoom(e.target.value);
-                                setCurrentPage(1);
-                            }}
-                            disabled={loading}
-                        >
-                            <option value="">Toutes les salles</option>
-                            {allRooms.map(r => (
-                                <option key={r.id || r._id} value={r.name}>
-                                    {r.name} {r.capacity ? `(${r.capacity} places)` : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <Section
-                title={`📝 Examens (${filteredExams.filter(e => e.type === "examen").length})`}
-                data={examTypes.examen}
-                onEdit={handleEditClick}
-                onDelete={(e) => {
-                    setSelectedExam(e);
-                    setShowDeleteConfirmModal(true);
-                }}
-                loading={loading}
-            />
-            
-                onConvocation={(exam) => setSelectedExamForConvocation(exam)}
-                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
-            />
-
-            <Section
-                title={`✏️ Contrôles Continus (${filteredExams.filter(e => e.type === "cc").length})`}
-                data={examTypes.cc}
-                onEdit={handleEditClick}
-                onDelete={(e) => {
-                    setSelectedExam(e);
-                    setShowDeleteConfirmModal(true);
-                }}
-                loading={loading}
-            />
-            
-                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
-            />
-
-            <Section
-                title={`🔄 Rattrapages (${filteredExams.filter(e => e.type === "rattrapage").length})`}
-                data={examTypes.rattrapage}
-                onEdit={handleEditClick}
-                onDelete={(e) => {
-                    setSelectedExam(e);
-                    setShowDeleteConfirmModal(true);
-                }}
-                loading={loading}
-                onNotify={(exam) => setSelectedExamForNotification(exam)} // ← ADD THIS LINE
-            />
-            {selectedExamForConvocation && (
-                <ConvocationModal
-                    exam={selectedExamForConvocation}
-                    onClose={() => setSelectedExamForConvocation(null)}
-                />
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <button
+                                className="btn-secondary"
+                                onClick={() =>
+                                    setCurrentPage((prev) =>
+                                        Math.max(prev - 1, 1)
+                                    )
+                                }
+                                disabled={currentPage === 1 || loading}
+                            >
+                                ◀ Précédent
+                            </button>
+                            <span>
+                                Page {currentPage} sur {totalPages}
+                            </span>
+                            <button
+                                className="btn-secondary"
+                                onClick={() =>
+                                    setCurrentPage((prev) =>
+                                        Math.min(prev + 1, totalPages)
+                                    )
+                                }
+                                disabled={currentPage === totalPages || loading}
+                            >
+                                Suivant ▶
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
-            {selectedExamForNotification && (
-                <NotifyTeacherModal
-                    exam={selectedExamForNotification}
-                    onClose={() => setSelectedExamForNotification(null)}
-                    onSuccess={() => {
-                        console.log("Notification sent successfully!");
-                    }}
-                />
-            )}
-
-            {filteredExams.length > 0 && (
-                <div className="pagination">
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1 || loading}
-                    >
-                        ◀ Précédent
-                    </button>
-                    
-                    <span className="pagination-info">
-                        Page {currentPage} sur {totalPages} • {filteredExams.length} examens
-                    </span>
-                    
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages || totalPages === 0 || loading}
-                    >
-                        Suivant ▶
-                    </button>
-                </div>
-            )}
-
-            <ExamCalendar exams={exams} />
 
             <AddExamModal
                 isOpen={showAddExamModal}
@@ -860,7 +854,7 @@ const AddExamModal = ({
     loading,
     autoAssignLoading,
     conflictError,
-    availableTeachers
+    availableTeachers,
 }) => (
     <Modal
         isOpen={isOpen}
@@ -908,7 +902,7 @@ const EditExamModal = ({
     loading,
     autoAssignLoading,
     conflictError,
-    availableTeachers
+    availableTeachers,
 }) => (
     <Modal
         isOpen={isOpen}
@@ -939,25 +933,37 @@ const EditExamModal = ({
     </Modal>
 );
 
-const DeleteConfirmModal = ({ isOpen, onClose, selectedExam, onConfirm, loading }) => (
-    <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title="🗑️ Supprimer l'examen"
-    >
+const DeleteConfirmModal = ({
+    isOpen,
+    onClose,
+    selectedExam,
+    onConfirm,
+    loading,
+}) => (
+    <Modal isOpen={isOpen} onClose={onClose} title="🗑️ Supprimer l'examen">
         <div className="delete-confirm-modal">
             <p>Êtes-vous sûr de vouloir supprimer cet examen ?</p>
-            <p><strong>Cette action est irréversible.</strong></p>
-            
+            <p>
+                <strong>Cette action est irréversible.</strong>
+            </p>
+
             {selectedExam && (
                 <div className="exam-details">
-                    <p><strong>Module:</strong> {selectedExam.module}</p>
-                    <p><strong>Enseignant:</strong> {selectedExam.teacher}</p>
-                    <p><strong>Date:</strong> {selectedExam.date}</p>
-                    <p><strong>Salle:</strong> {selectedExam.room}</p>
+                    <p>
+                        <strong>Module:</strong> {selectedExam.module}
+                    </p>
+                    <p>
+                        <strong>Enseignant:</strong> {selectedExam.teacher}
+                    </p>
+                    <p>
+                        <strong>Date:</strong> {selectedExam.date}
+                    </p>
+                    <p>
+                        <strong>Salle:</strong> {selectedExam.room}
+                    </p>
                 </div>
             )}
-            
+
             <div className="form-actions">
                 <button
                     className="btn-secondary"
@@ -971,7 +977,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, selectedExam, onConfirm, loading 
                     onClick={onConfirm}
                     disabled={loading}
                 >
-                    {loading ? 'Suppression...' : 'Confirmer la suppression'}
+                    {loading ? "Suppression..." : "Confirmer la suppression"}
                 </button>
             </div>
         </div>
@@ -996,20 +1002,23 @@ const ExamForm = ({
     loading,
     autoAssignLoading,
     conflictError,
-    mode,
-    availableTeachers = []
+    availableTeachers = [],
 }) => {
     const filteredGroups = useMemo(() => {
-        return groups.filter(g => {
-            if (typeof g === 'object') {
-                return (!exam.niveau || g.level?.name === exam.niveau) && 
-                       (!exam.specialite || g.specialty?.name === exam.specialite);
+        return groups.filter((g) => {
+            if (typeof g === "object") {
+                return (
+                    (!exam.niveau || g.level?.name === exam.niveau) &&
+                    (!exam.specialite || g.specialty?.name === exam.specialite)
+                );
             }
             return true;
         });
     }, [groups, exam.niveau, exam.specialite]);
 
-    const canAutoAssign = exam.date && exam.startTime && exam.endTime;
+    // FIXED: Check both module and time for auto-assign
+    const canAutoAssign =
+        exam.module && exam.date && exam.startTime && exam.endTime;
 
     return (
         <div className="add-exam-form">
@@ -1024,7 +1033,9 @@ const ExamForm = ({
                     <label>Type d'examen</label>
                     <select
                         value={exam.type}
-                        onChange={(e) => setExam({ ...exam, type: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, type: e.target.value })
+                        }
                         disabled={loading}
                     >
                         <option value="examen">Examen</option>
@@ -1037,7 +1048,9 @@ const ExamForm = ({
                     <label>Module *</label>
                     <select
                         value={exam.module}
-                        onChange={(e) => setExam({ ...exam, module: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, module: e.target.value })
+                        }
                         disabled={loading}
                         required
                     >
@@ -1054,10 +1067,18 @@ const ExamForm = ({
             <div className="form-row">
                 <div className="form-group">
                     <label>Enseignant *</label>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            gap: "10px",
+                            alignItems: "flex-end",
+                        }}
+                    >
                         <select
                             value={exam.teacher}
-                            onChange={(e) => setExam({ ...exam, teacher: e.target.value })}
+                            onChange={(e) =>
+                                setExam({ ...exam, teacher: e.target.value })
+                            }
                             disabled={loading}
                             required
                             style={{ flex: 1 }}
@@ -1069,13 +1090,15 @@ const ExamForm = ({
                                 </option>
                             ))}
                         </select>
-                        
+
                         <button
                             type="button"
                             className="auto-assign-btn"
                             onClick={onAutoAssign}
-                            disabled={loading || autoAssignLoading || !canAutoAssign}
-                            style={{ minWidth: '160px' }}
+                            disabled={
+                                loading || autoAssignLoading || !canAutoAssign
+                            }
+                            style={{ minWidth: "160px" }}
                         >
                             {autoAssignLoading ? (
                                 <span>Recherche...</span>
@@ -1086,41 +1109,67 @@ const ExamForm = ({
                             )}
                         </button>
                     </div>
-                    
+
                     {availableTeachers.length > 0 && (
-                        <div style={{ 
-                            marginTop: '8px', 
-                            padding: '8px', 
-                            background: '#f0f9ff', 
-                            borderRadius: '6px',
-                            fontSize: '0.85rem'
-                        }}>
-                            <strong>Enseignants disponibles ({availableTeachers.length}) :</strong>
-                            <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {availableTeachers.slice(0, 5).map(teacher => (
-                                    <span key={teacher.id} style={{
-                                        background: '#3b82f6',
-                                        color: 'white',
-                                        padding: '2px 8px',
-                                        borderRadius: '12px',
-                                        fontSize: '0.8rem'
-                                    }}>
-                                        {teacher.name}
-                                    </span>
-                                ))}
+                        <div
+                            style={{
+                                marginTop: "8px",
+                                padding: "8px",
+                                background: "#f0f9ff",
+                                borderRadius: "6px",
+                                fontSize: "0.85rem",
+                            }}
+                        >
+                            <strong>
+                                Enseignants disponibles (
+                                {availableTeachers.length}) :
+                            </strong>
+                            <div
+                                style={{
+                                    marginTop: "4px",
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "6px",
+                                }}
+                            >
+                                {availableTeachers
+                                    .slice(0, 5)
+                                    .map((teacher) => (
+                                        <span
+                                            key={teacher.id}
+                                            style={{
+                                                background: "#3b82f6",
+                                                color: "white",
+                                                padding: "2px 8px",
+                                                borderRadius: "12px",
+                                                fontSize: "0.8rem",
+                                            }}
+                                        >
+                                            {teacher.name}
+                                        </span>
+                                    ))}
                                 {availableTeachers.length > 5 && (
-                                    <span style={{ color: '#6b7280' }}>
+                                    <span style={{ color: "#6b7280" }}>
                                         +{availableTeachers.length - 5} autres
                                     </span>
                                 )}
                             </div>
                         </div>
                     )}
-                    
-                    <small style={{ color: '#6b7280', fontSize: '0.8rem', display: 'block', marginTop: '4px' }}>
-                        {canAutoAssign ? 
-                            "Cliquez sur 'Affectation auto' pour trouver un enseignant disponible" : 
-                            "Sélectionnez d'abord la date et l'heure pour activer l'affectation automatique"}
+
+                    <small
+                        style={{
+                            color: "#6b7280",
+                            fontSize: "0.8rem",
+                            display: "block",
+                            marginTop: "4px",
+                        }}
+                    >
+                        {!exam.module
+                            ? "⚠️ Sélectionnez d'abord un module"
+                            : !canAutoAssign
+                            ? "Sélectionnez la date et l'heure pour activer l'affectation automatique"
+                            : "✅ Cliquez sur 'Affectation auto' pour trouver un enseignant disponible"}
                     </small>
                 </div>
 
@@ -1128,18 +1177,21 @@ const ExamForm = ({
                     <label>Salle *</label>
                     <select
                         value={exam.room}
-                        onChange={(e) => setExam({ ...exam, room: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, room: e.target.value })
+                        }
                         disabled={loading}
                         required
                     >
                         <option value="">Sélectionner une salle</option>
                         {rooms.map((r) => (
                             <option key={r.id || r._id} value={r.name}>
-                                {r.name} {r.capacity ? `(${r.capacity} places)` : ''}
+                                {r.name}{" "}
+                                {r.capacity ? `(${r.capacity} places)` : ""}
                             </option>
                         ))}
                     </select>
-                    <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                    <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>
                         {rooms.length} salle(s) disponible(s) pour ce créneau
                     </small>
                 </div>
@@ -1150,13 +1202,18 @@ const ExamForm = ({
                     <label>Spécialité</label>
                     <select
                         value={exam.specialite}
-                        onChange={(e) => setExam({ ...exam, specialite: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, specialite: e.target.value })
+                        }
                         disabled={loading}
                     >
                         <option value="">Sélectionner une spécialité</option>
                         {specialties.map((s, index) => (
-                            <option key={index} value={typeof s === 'object' ? s.name : s}>
-                                {typeof s === 'object' ? s.name : s}
+                            <option
+                                key={index}
+                                value={typeof s === "object" ? s.name : s}
+                            >
+                                {typeof s === "object" ? s.name : s}
                             </option>
                         ))}
                     </select>
@@ -1166,13 +1223,18 @@ const ExamForm = ({
                     <label>Niveau</label>
                     <select
                         value={exam.niveau}
-                        onChange={(e) => setExam({ ...exam, niveau: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, niveau: e.target.value })
+                        }
                         disabled={loading}
                     >
                         <option value="">Sélectionner un niveau</option>
                         {levels.map((l, index) => (
-                            <option key={index} value={typeof l === 'object' ? l.name : l}>
-                                {typeof l === 'object' ? l.name : l}
+                            <option
+                                key={index}
+                                value={typeof l === "object" ? l.name : l}
+                            >
+                                {typeof l === "object" ? l.name : l}
                             </option>
                         ))}
                     </select>
@@ -1184,13 +1246,18 @@ const ExamForm = ({
                     <label>Groupe</label>
                     <select
                         value={exam.group}
-                        onChange={(e) => setExam({ ...exam, group: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, group: e.target.value })
+                        }
                         disabled={loading}
                     >
                         <option value="">Sélectionner un groupe</option>
                         {filteredGroups.map((g, index) => (
-                            <option key={index} value={typeof g === 'object' ? g.name : g}>
-                                {typeof g === 'object' ? g.name : g}
+                            <option
+                                key={index}
+                                value={typeof g === "object" ? g.name : g}
+                            >
+                                {typeof g === "object" ? g.name : g}
                             </option>
                         ))}
                     </select>
@@ -1200,14 +1267,19 @@ const ExamForm = ({
                     <label>Semestre *</label>
                     <select
                         value={exam.semester}
-                        onChange={(e) => setExam({ ...exam, semester: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, semester: e.target.value })
+                        }
                         disabled={loading}
                         required
                     >
                         <option value="">Sélectionner un semestre</option>
                         {semesters.map((s, index) => (
-                            <option key={index} value={typeof s === 'object' ? s.name : s}>
-                                {typeof s === 'object' ? s.name : s}
+                            <option
+                                key={index}
+                                value={typeof s === "object" ? s.name : s}
+                            >
+                                {typeof s === "object" ? s.name : s}
                             </option>
                         ))}
                     </select>
@@ -1220,7 +1292,9 @@ const ExamForm = ({
                     <input
                         type="date"
                         value={exam.date}
-                        onChange={(e) => setExam({ ...exam, date: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, date: e.target.value })
+                        }
                         disabled={loading}
                         required
                     />
@@ -1231,7 +1305,9 @@ const ExamForm = ({
                     <input
                         type="time"
                         value={exam.startTime}
-                        onChange={(e) => setExam({ ...exam, startTime: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, startTime: e.target.value })
+                        }
                         disabled={loading}
                         required
                     />
@@ -1242,7 +1318,9 @@ const ExamForm = ({
                     <input
                         type="time"
                         value={exam.endTime}
-                        onChange={(e) => setExam({ ...exam, endTime: e.target.value })}
+                        onChange={(e) =>
+                            setExam({ ...exam, endTime: e.target.value })
+                        }
                         disabled={loading}
                         required
                     />
@@ -1250,21 +1328,21 @@ const ExamForm = ({
             </div>
 
             <div className="form-actions">
-                <button 
-                    className="btn-secondary" 
+                <button
+                    className="btn-secondary"
                     onClick={onCancel}
                     disabled={loading}
                     type="button"
                 >
                     Annuler
                 </button>
-                <button 
-                    className="btn-primary" 
+                <button
+                    className="btn-primary"
                     onClick={onSubmit}
                     disabled={loading}
                     type="button"
                 >
-                    {loading ? 'Traitement...' : submitLabel}
+                    {loading ? "Traitement..." : submitLabel}
                 </button>
             </div>
         </div>
@@ -1272,19 +1350,10 @@ const ExamForm = ({
 };
 
 /* ================= TABLE COMPONENT ================= */
-const Section = ({
-    title,
-    data,
-    onEdit,
-    onDelete,
-    loading , 
-    onConvocation,
-    onNotify,
-
-}) => (
+const Section = ({ title, data, onEdit, onDelete, onNotify }) => (
     <div className="exam-section">
         <h2>{title}</h2>
-        
+
         <table className="exam-table">
             <thead>
                 <tr>
@@ -1306,7 +1375,7 @@ const Section = ({
                 {data.length === 0 ? (
                     <tr>
                         <td colSpan="11" className="empty">
-                            <div className="empty-icon">📭</div>
+                            <div className="empty-icon">🔭</div>
                             <p>Aucun examen trouvé</p>
                         </td>
                     </tr>
@@ -1315,31 +1384,41 @@ const Section = ({
                         <tr key={e.id}>
                             <td>
                                 <span className={`type-badge badge-${e.type}`}>
-                                    {e.type === 'examen' ? 'EX' : e.type === 'cc' ? 'CC' : 'RAT'}
+                                    {e.type === "examen"
+                                        ? "EX"
+                                        : e.type === "cc"
+                                        ? "CC"
+                                        : "RAT"}
                                 </span>
                             </td>
-                            <td><strong>{e.module}</strong></td>
+                            <td>
+                                <strong>{e.module}</strong>
+                            </td>
                             <td>{e.teacher}</td>
                             <td>
-                                <span className="room-badge">
-                                    {e.room}
-                                </span>
+                                <span className="room-badge">{e.room}</span>
                             </td>
                             <td>{e.specialite}</td>
                             <td>{e.niveau}</td>
                             <td>{e.group}</td>
                             <td>{e.semester}</td>
-                            <td>{e.date ? new Date(e.date).toLocaleDateString('fr-FR') : 'N/A'}</td>
+                            <td>
+                                {e.date
+                                    ? new Date(e.date).toLocaleDateString(
+                                          "fr-FR"
+                                      )
+                                    : "N/A"}
+                            </td>
                             <td>
                                 <span className="time-slot">
-                                    {e.start_time || e.startTime} - {e.end_time || e.endTime}
+                                    {e.start_time || e.startTime} -{" "}
+                                    {e.end_time || e.endTime}
                                 </span>
                             </td>
                             <td className="actions">
                                 <button
                                     className="btn-icon btn-edit"
                                     onClick={() => onEdit(e)}
-                                    disabled={loading}
                                     title="Modifier"
                                 >
                                     ✏️
@@ -1347,18 +1426,16 @@ const Section = ({
                                 <button
                                     className="btn-icon btn-delete"
                                     onClick={() => onDelete(e)}
-                                    disabled={loading}
                                     title="Supprimer"
                                 >
                                     🗑️
                                 </button>
-                                {/* ← ADD THIS BUTTON */}
                                 <button
-                                    className="btn-notify"
+                                    className="btn-icon btn-notify"
                                     onClick={() => onNotify(e)}
                                     title="Notifier l'enseignant"
                                 >
-                                    📧 Notifier
+                                    📧
                                 </button>
                             </td>
                         </tr>
