@@ -1,0 +1,984 @@
+/* ==========================================
+   ExamCalendar.css - Optimized & Improved
+   ========================================== */
+
+/* ==========================================
+   CSS VARIABLES FOR CONSISTENCY
+   ========================================== */
+:root {
+    /* Colors */
+    --exam-blue: #2563eb;
+    --exam-blue-dark: #1e40af;
+    --exam-blue-light: #dbeafe;
+    --cc-green: #16a34a;
+    --cc-green-dark: #166534;
+    --cc-green-light: #dcfce7;
+    --rattrapage-red: #dc2626;
+    --rattrapage-red-dark: #991b1b;
+    --rattrapage-red-light: #fee2e2;
+    
+    /* Neutral Colors */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    
+    /* Status Colors */
+    --success-green: #10b981;
+    --success-green-dark: #059669;
+    --warning-yellow: #f59e0b;
+    --warning-yellow-light: #fef3c7;
+    --warning-yellow-dark: #92400e;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 20px;
+    --spacing-xl: 25px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 14px;
+    --radius-full: 20px;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.08);
+    --shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.5);
+    
+    /* Transitions */
+    --transition-fast: all 0.2s ease;
+    --transition-normal: all 0.3s ease;
+}
+
+/* ==========================================
+   CALENDAR CONTAINER
+   ========================================== */
+.exam-calendar-container {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-lg);
+    margin-top: 30px;
+}
+
+/* ==========================================
+   CALENDAR HEADER
+   ========================================== */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.calendar-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.calendar-icon {
+    font-size: 1.8rem;
+}
+
+.event-count {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--gray-500);
+    margin-left: 10px;
+}
+
+/* ==========================================
+   LEGEND
+   ========================================== */
+.legend {
+    display: flex;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.85rem;
+    color: var(--gray-600);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.legend-color.examen {
+    background-color: var(--exam-blue);
+}
+
+.legend-color.cc {
+    background-color: var(--cc-green);
+}
+
+.legend-color.rattrapage {
+    background-color: var(--rattrapage-red);
+}
+
+/* ==========================================
+   CALENDAR TOOLBAR
+   ========================================== */
+.calendar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding: 15px;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.toolbar-left,
+.toolbar-center,
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toolbar-btn {
+    background: white;
+    border: 1px solid var(--gray-300);
+    padding: var(--spacing-sm) 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    user-select: none;
+}
+
+.toolbar-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.toolbar-btn:active {
+    transform: scale(0.98);
+}
+
+.today-btn {
+    background: var(--exam-blue);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) 16px;
+}
+
+.today-btn:hover {
+    background: var(--exam-blue-dark);
+}
+
+.current-date {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-left: 10px;
+    font-size: 1.1rem;
+    text-transform: capitalize;
+}
+
+/* ==========================================
+   VIEW BUTTONS
+   ========================================== */
+.view-buttons {
+    display: flex;
+    gap: 5px;
+    background: white;
+    padding: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+}
+
+.view-btn {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    color: var(--gray-500);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+
+.view-btn:hover {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.view-btn.active {
+    background: var(--exam-blue);
+    color: white;
+}
+
+/* ==========================================
+   TYPE FILTER
+   ========================================== */
+.type-filter {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-300);
+    background: white;
+    color: var(--gray-700);
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-width: 160px;
+    transition: var(--transition-fast);
+}
+
+.type-filter:hover {
+    border-color: var(--gray-400);
+}
+
+.type-filter:focus {
+    outline: none;
+    border-color: var(--exam-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ==========================================
+   CALENDAR WRAPPER
+   ========================================== */
+.calendar-wrapper {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+}
+
+/* ==========================================
+   CUSTOM EVENT STYLING
+   ========================================== */
+.custom-event {
+    padding: 4px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.event-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-time {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* ==========================================
+   REACT BIG CALENDAR OVERRIDES
+   ========================================== */
+.rbc-calendar {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.rbc-header {
+    padding: var(--spacing-md);
+    font-weight: 600;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.rbc-today {
+    background-color: #f0f9ff;
+}
+
+.rbc-off-range-bg {
+    background: var(--gray-50);
+}
+
+.rbc-date-cell {
+    padding: var(--spacing-sm);
+    text-align: center;
+}
+
+.rbc-date-cell.rbc-now {
+    font-weight: bold;
+    color: var(--exam-blue);
+}
+
+.rbc-event {
+    border: none !important;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-fast);
+    cursor: pointer;
+}
+
+.rbc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    opacity: 0.95;
+}
+
+.rbc-event:focus {
+    outline: 2px solid var(--exam-blue);
+    outline-offset: 2px;
+}
+
+.rbc-selected-cell {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.rbc-show-more {
+    color: var(--exam-blue);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.rbc-show-more:hover {
+    text-decoration: underline;
+}
+
+/* Fix for week view time slots */
+.rbc-time-slot {
+    min-height: 40px;
+}
+
+/* Fix for agenda view */
+.rbc-agenda-view {
+    padding: 10px;
+}
+
+.rbc-agenda-table {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+/* ==========================================
+   EXAM DETAILS MODAL
+   ========================================== */
+.exam-details-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-xl);
+    animation: modalSlideIn 0.3s ease;
+    z-index: 9999;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Custom scrollbar for modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500);
+}
+
+/* ==========================================
+   MODAL HEADER
+   ========================================== */
+.modal-header {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--gray-900);
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--gray-500);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.close-btn:hover {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.close-btn:active {
+    transform: scale(0.95);
+}
+
+/* ==========================================
+   MODAL BODY
+   ========================================== */
+.modal-body {
+    padding: var(--spacing-xl);
+    background: white;
+}
+
+.exam-type-badge {
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-badge.examen {
+    background: var(--exam-blue-light);
+    color: var(--exam-blue-dark);
+}
+
+.type-badge.cc {
+    background: var(--cc-green-light);
+    color: var(--cc-green-dark);
+}
+
+.type-badge.rattrapage {
+    background: var(--rattrapage-red-light);
+    color: var(--rattrapage-red-dark);
+}
+
+.exam-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.info-value {
+    font-size: 1.05rem;
+    color: var(--gray-900);
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* ==========================================
+   MODAL FOOTER
+   ========================================== */
+.modal-footer {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    background: white;
+    position: sticky;
+    bottom: 0;
+}
+
+.btn-close {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: none;
+    padding: 10px 24px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    font-size: 0.95rem;
+}
+
+.btn-close:hover {
+    background: var(--gray-200);
+}
+
+.btn-close:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   FORM STYLES (for modals)
+   ========================================== */
+.modal-content .add-exam-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.modal-content .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.modal-content .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.modal-content .form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.modal-content .form-group select,
+.modal-content .form-group input {
+    padding: 10px var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-300);
+    font-size: 0.95rem;
+    transition: var(--transition-fast);
+    background: white;
+    width: 100%;
+}
+
+.modal-content .form-group select:hover,
+.modal-content .form-group input:hover {
+    border-color: var(--gray-400);
+}
+
+.modal-content .form-group select:focus,
+.modal-content .form-group input:focus {
+    outline: none;
+    border-color: var(--exam-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modal-content .form-group select:disabled,
+.modal-content .form-group input:disabled {
+    background: var(--gray-100);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.modal-content .auto-assign-btn {
+    background: var(--success-green);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.modal-content .auto-assign-btn:hover:not(:disabled) {
+    background: var(--success-green-dark);
+    transform: translateY(-1px);
+}
+
+.modal-content .auto-assign-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.modal-content .auto-assign-btn:disabled {
+    background: var(--gray-400);
+    cursor: not-allowed;
+}
+
+.modal-content .conflict-alert {
+    background: var(--warning-yellow-light);
+    border: 1px solid var(--warning-yellow);
+    border-radius: var(--radius-lg);
+    padding: 15px;
+    margin-bottom: 10px;
+    color: var(--warning-yellow-dark);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.modal-content .conflict-alert strong {
+    display: block;
+}
+
+.modal-content .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--gray-200);
+}
+
+.modal-content .btn-primary {
+    background: linear-gradient(135deg, var(--exam-blue), var(--exam-blue-dark));
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-content .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.modal-content .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+}
+
+.modal-content .btn-primary:hover:not(:disabled)::before {
+    opacity: 1;
+}
+
+.modal-content .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.modal-content .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.modal-content .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: none;
+    padding: 12px 28px;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.modal-content .btn-secondary:hover {
+    background: var(--gray-200);
+}
+
+.modal-content .btn-secondary:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+@media (max-width: 768px) {
+    .exam-calendar-container {
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .calendar-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .calendar-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .legend {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .calendar-toolbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 10px;
+    }
+    
+    .toolbar-left,
+    .toolbar-center,
+    .toolbar-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .view-buttons {
+        width: 100%;
+    }
+    
+    .view-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .type-filter {
+        width: 100%;
+    }
+    
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        margin: 10px;
+        max-height: 85vh;
+        border-radius: var(--radius-md);
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 15px;
+    }
+    
+    .exam-info-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .modal-content .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content .form-actions {
+        flex-direction: column;
+    }
+    
+    .modal-content .btn-primary,
+    .modal-content .btn-secondary {
+        width: 100%;
+    }
+    
+    /* Make calendar more compact on mobile */
+    .rbc-toolbar {
+        flex-wrap: wrap;
+    }
+    
+    .rbc-toolbar button {
+        font-size: 0.85rem;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .event-count {
+        font-size: 0.85rem;
+    }
+    
+    .legend-item {
+        font-size: 0.75rem;
+    }
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+    .exam-calendar-container {
+        box-shadow: none;
+        padding: 0;
+        page-break-inside: avoid;
+    }
+    
+    .calendar-toolbar,
+    .legend,
+    .modal-overlay,
+    .exam-details-modal,
+    .toolbar-btn,
+    .view-buttons,
+    .type-filter {
+        display: none !important;
+    }
+    
+    .rbc-calendar {
+        height: auto !important;
+    }
+    
+    .rbc-event {
+        box-shadow: none;
+    }
+    
+    /* Ensure colors print correctly */
+    .rbc-event,
+    .legend-color {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}
+
+/* ==========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ========================================== */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+    outline: 2px solid var(--exam-blue);
+    outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .rbc-event {
+        border: 2px solid currentColor !important;
+    }
+    
+    .modal-content {
+        border: 2px solid var(--gray-900);
+    }
+}

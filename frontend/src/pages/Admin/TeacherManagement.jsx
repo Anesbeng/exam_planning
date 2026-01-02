@@ -17,19 +17,46 @@ const TeacherManagement = () => {
     const [importFile, setImportFile] = useState(null);
     const [importing, setImporting] = useState(false);
 
+    const [specialties, setSpecialties] = useState([]); // State for specialties
+    const [academicYears, setAcademicYears] = useState([]); // NEW: State for academic years
+
     const [form, setForm] = useState({
         matricule: "",
         name: "",
         email: "",
         password: "",
         specialite: "",
-        annee_scolaire: new Date().getFullYear().toString(),
+        annee_scolaire: "",
     });
 
     /* ================= FETCH ================= */
     useEffect(() => {
         fetchTeachers();
     }, [search]);
+
+    useEffect(() => {
+        const fetchSpecialties = async () => {
+            try {
+                const res = await api.get("/specialties");
+                setSpecialties(res.data.specialties);
+            } catch (error) {
+                console.error("Erreur de chargement des spécialités", error);
+            }
+        };
+        fetchSpecialties();
+    }, []);
+
+    useEffect(() => {
+        const fetchAcademicYears = async () => {
+            try {
+                const res = await api.get("/academic-years");
+                setAcademicYears(res.data.academic_years);
+            } catch (error) {
+                console.error("Erreur de chargement des années universitaires", error);
+            }
+        };
+        fetchAcademicYears();
+    }, []); // NEW: Fetch academic years on component mount
 
     const fetchTeachers = async () => {
         try {
@@ -52,7 +79,7 @@ const TeacherManagement = () => {
             email: "",
             password: "",
             specialite: "",
-            annee_scolaire: new Date().getFullYear().toString(),
+            annee_scolaire: "",
         });
     };
 
@@ -171,7 +198,7 @@ const TeacherManagement = () => {
     const downloadTemplate = () => {
         const csv =
             "matricule;name;email;password;specialite;annee_scolaire\n" +
-            "ENS001;Ahmed Ali;ahmed@edu.dz;password123;Informatique;2024\n";
+            "ENS001;Ahmed Ali;ahmed@edu.dz;password123;Informatique;2024-2025\n";
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
@@ -301,7 +328,7 @@ const TeacherManagement = () => {
                     <div className="form-row">
                         <div className="form-group">
                             <label>Spécialité *</label>
-                            <input
+                            <select
                                 value={form.specialite}
                                 onChange={(e) =>
                                     setForm({
@@ -309,12 +336,18 @@ const TeacherManagement = () => {
                                         specialite: e.target.value,
                                     })
                                 }
-                            />
+                            >
+                                <option value="">Sélectionner une spécialité</option>
+                                {specialties.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="form-group">
                             <label>Année Scolaire</label>
-                            <input
-                                type="number"
+                            <select
                                 value={form.annee_scolaire}
                                 onChange={(e) =>
                                     setForm({
@@ -322,7 +355,14 @@ const TeacherManagement = () => {
                                         annee_scolaire: e.target.value,
                                     })
                                 }
-                            />
+                            >
+                                <option value="">Sélectionner une année scolaire</option>
+                                {academicYears.map((y) => (
+                                    <option key={y.id} value={y.name}>
+                                        {y.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
@@ -403,7 +443,7 @@ const TeacherManagement = () => {
                     <div className="form-row">
                         <div className="form-group">
                             <label>Spécialité *</label>
-                            <input
+                            <select
                                 value={form.specialite}
                                 onChange={(e) =>
                                     setForm({
@@ -411,12 +451,18 @@ const TeacherManagement = () => {
                                         specialite: e.target.value,
                                     })
                                 }
-                            />
+                            >
+                                <option value="">Sélectionner une spécialité</option>
+                                {specialties.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="form-group">
                             <label>Année Scolaire</label>
-                            <input
-                                type="number"
+                            <select
                                 value={form.annee_scolaire}
                                 onChange={(e) =>
                                     setForm({
@@ -424,7 +470,14 @@ const TeacherManagement = () => {
                                         annee_scolaire: e.target.value,
                                     })
                                 }
-                            />
+                            >
+                                <option value="">Sélectionner une année scolaire</option>
+                                {academicYears.map((y) => (
+                                    <option key={y.id} value={y.name}>
+                                        {y.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
