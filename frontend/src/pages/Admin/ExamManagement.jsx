@@ -30,9 +30,7 @@ const ExamManagement = () => {
     const [semesters, setSemesters] = useState([]);
     const [allRooms, setAllRooms] = useState([]);
 
-    // Loading states
-    const [loading, setLoading] = useState(false);
-    const [autoAssignLoading, setAutoAssignLoading] = useState(false);
+    // Error states only
     const [conflictError, setConflictError] = useState(null);
     const [availableTeachers, setAvailableTeachers] = useState([]);
 
@@ -74,7 +72,6 @@ const ExamManagement = () => {
 
     const fetchInitialData = async () => {
         try {
-            setLoading(true);
             await Promise.all([
                 fetchExams(),
                 fetchTeachers(),
@@ -85,8 +82,6 @@ const ExamManagement = () => {
         } catch (err) {
             console.error("Initial fetch error:", err);
             alert("Erreur lors du chargement des données");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -253,7 +248,6 @@ const ExamManagement = () => {
                 return;
             }
 
-            setAutoAssignLoading(true);
             setConflictError(null);
 
             try {
@@ -312,8 +306,6 @@ const ExamManagement = () => {
                     "Erreur lors de la recherche d'enseignant disponible";
                 alert(`❌ ${message}`);
                 setConflictError(message);
-            } finally {
-                setAutoAssignLoading(false);
             }
         },
         [newExam, editExam, selectedExam]
@@ -340,8 +332,6 @@ const ExamManagement = () => {
                 alert("Veuillez sélectionner un enseignant.");
                 return;
             }
-
-            setLoading(true);
 
             const response = await api.post("/exams", {
                 type: newExam.type,
@@ -374,8 +364,6 @@ const ExamManagement = () => {
                 "Erreur lors de la création de l'examen";
             alert(message);
             setConflictError(message);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -420,8 +408,6 @@ const ExamManagement = () => {
                 return;
             }
 
-            setLoading(true);
-
             const response = await api.put(`/exams/${selectedExam.id}`, {
                 type: editExam.type,
                 module: editExam.module,
@@ -453,14 +439,11 @@ const ExamManagement = () => {
                 "Erreur lors de la modification de l'examen";
             alert(message);
             setConflictError(message);
-        } finally {
-            setLoading(false);
         }
     };
 
     const handleDeleteExam = async () => {
         try {
-            setLoading(true);
             await api.delete(`/exams/${selectedExam.id}`);
 
             alert("Examen supprimé avec succès!");
@@ -472,8 +455,6 @@ const ExamManagement = () => {
         } catch (err) {
             console.error("Delete error", err);
             alert("Erreur lors de la suppression de l'examen");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -534,17 +515,6 @@ const ExamManagement = () => {
 
     return (
         <div className="exam-management">
-            {(loading || autoAssignLoading) && (
-                <div className="loader-overlay">
-                    <div className="loader"></div>
-                    <div style={{ marginTop: "10px", color: "#3b82f6" }}>
-                        {autoAssignLoading
-                            ? "Recherche d'enseignant disponible..."
-                            : "Chargement..."}
-                    </div>
-                </div>
-            )}
-
             <div className="exam-header">
                 <h1>📚 Planning des Examens</h1>
                 <div style={{ display: "flex", gap: "10px" }}>
@@ -572,7 +542,6 @@ const ExamManagement = () => {
                     <button
                         className="add-exam-btn"
                         onClick={() => setShowAddExamModal(true)}
-                        disabled={loading}
                     >
                         <span>+</span> Ajouter un examen
                     </button>
@@ -596,7 +565,6 @@ const ExamManagement = () => {
                                         setSearch(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    disabled={loading}
                                 />
                             </div>
 
@@ -608,7 +576,6 @@ const ExamManagement = () => {
                                         setFilterType(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    disabled={loading}
                                 >
                                     <option value="">Tous les types</option>
                                     <option value="examen">Examen</option>
@@ -627,7 +594,6 @@ const ExamManagement = () => {
                                         setFilterTeacher(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    disabled={loading}
                                 >
                                     <option value="">
                                         Tous les enseignants
@@ -651,7 +617,6 @@ const ExamManagement = () => {
                                         setFilterRoom(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    disabled={loading}
                                 >
                                     <option value="">Toutes les salles</option>
                                     {allRooms.map((r) => (
@@ -679,7 +644,6 @@ const ExamManagement = () => {
                                 setSelectedExam(e);
                                 setShowDeleteConfirmModal(true);
                             }}
-                            loading={loading}
                             onNotify={(exam) =>
                                 setSelectedExamForNotification(exam)
                             }
@@ -696,7 +660,6 @@ const ExamManagement = () => {
                                 setSelectedExam(e);
                                 setShowDeleteConfirmModal(true);
                             }}
-                            loading={loading}
                             onNotify={(exam) =>
                                 setSelectedExamForNotification(exam)
                             }
@@ -714,7 +677,6 @@ const ExamManagement = () => {
                                 setSelectedExam(e);
                                 setShowDeleteConfirmModal(true);
                             }}
-                            loading={loading}
                             onNotify={(exam) =>
                                 setSelectedExamForNotification(exam)
                             }
@@ -752,7 +714,7 @@ const ExamManagement = () => {
                                         Math.max(prev - 1, 1)
                                     )
                                 }
-                                disabled={currentPage === 1 || loading}
+                                disabled={currentPage === 1}
                             >
                                 ◀ Précédent
                             </button>
@@ -766,7 +728,7 @@ const ExamManagement = () => {
                                         Math.min(prev + 1, totalPages)
                                     )
                                 }
-                                disabled={currentPage === totalPages || loading}
+                                disabled={currentPage === totalPages}
                             >
                                 Suivant ▶
                             </button>
@@ -794,8 +756,6 @@ const ExamManagement = () => {
                 semesters={semesters}
                 onSubmit={handleAddExam}
                 onAutoAssign={() => handleAutoAssignTeacher(false)}
-                loading={loading}
-                autoAssignLoading={autoAssignLoading}
                 conflictError={conflictError}
                 availableTeachers={availableTeachers}
             />
@@ -819,8 +779,6 @@ const ExamManagement = () => {
                 semesters={semesters}
                 onSubmit={handleUpdateExam}
                 onAutoAssign={() => handleAutoAssignTeacher(true)}
-                loading={loading}
-                autoAssignLoading={autoAssignLoading}
                 conflictError={conflictError}
                 availableTeachers={availableTeachers}
             />
@@ -830,7 +788,6 @@ const ExamManagement = () => {
                 onClose={() => setShowDeleteConfirmModal(false)}
                 selectedExam={selectedExam}
                 onConfirm={handleDeleteExam}
-                loading={loading}
             />
         </div>
     );
@@ -851,8 +808,6 @@ const AddExamModal = ({
     semesters,
     onSubmit,
     onAutoAssign,
-    loading,
-    autoAssignLoading,
     conflictError,
     availableTeachers,
 }) => (
@@ -876,8 +831,6 @@ const AddExamModal = ({
             onCancel={onClose}
             onAutoAssign={onAutoAssign}
             submitLabel="Enregistrer"
-            loading={loading}
-            autoAssignLoading={autoAssignLoading}
             conflictError={conflictError}
             mode="add"
             availableTeachers={availableTeachers}
@@ -899,8 +852,6 @@ const EditExamModal = ({
     semesters,
     onSubmit,
     onAutoAssign,
-    loading,
-    autoAssignLoading,
     conflictError,
     availableTeachers,
 }) => (
@@ -924,8 +875,6 @@ const EditExamModal = ({
             onCancel={onClose}
             onAutoAssign={onAutoAssign}
             submitLabel="Modifier"
-            loading={loading}
-            autoAssignLoading={autoAssignLoading}
             conflictError={conflictError}
             mode="edit"
             availableTeachers={availableTeachers}
@@ -933,13 +882,7 @@ const EditExamModal = ({
     </Modal>
 );
 
-const DeleteConfirmModal = ({
-    isOpen,
-    onClose,
-    selectedExam,
-    onConfirm,
-    loading,
-}) => (
+const DeleteConfirmModal = ({ isOpen, onClose, selectedExam, onConfirm }) => (
     <Modal isOpen={isOpen} onClose={onClose} title="🗑️ Supprimer l'examen">
         <div className="delete-confirm-modal">
             <p>Êtes-vous sûr de vouloir supprimer cet examen ?</p>
@@ -965,19 +908,11 @@ const DeleteConfirmModal = ({
             )}
 
             <div className="form-actions">
-                <button
-                    className="btn-secondary"
-                    onClick={onClose}
-                    disabled={loading}
-                >
+                <button className="btn-secondary" onClick={onClose}>
                     Annuler
                 </button>
-                <button
-                    className="btn-primary delete-btn"
-                    onClick={onConfirm}
-                    disabled={loading}
-                >
-                    {loading ? "Suppression..." : "Confirmer la suppression"}
+                <button className="btn-primary delete-btn" onClick={onConfirm}>
+                    Confirmer la suppression
                 </button>
             </div>
         </div>
@@ -999,8 +934,6 @@ const ExamForm = ({
     onCancel,
     onAutoAssign,
     submitLabel,
-    loading,
-    autoAssignLoading,
     conflictError,
     availableTeachers = [],
 }) => {
@@ -1036,7 +969,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, type: e.target.value })
                         }
-                        disabled={loading}
                     >
                         <option value="examen">Examen</option>
                         <option value="cc">Contrôle Continu</option>
@@ -1051,7 +983,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, module: e.target.value })
                         }
-                        disabled={loading}
                         required
                     >
                         <option value="">Sélectionner un module</option>
@@ -1079,7 +1010,6 @@ const ExamForm = ({
                             onChange={(e) =>
                                 setExam({ ...exam, teacher: e.target.value })
                             }
-                            disabled={loading}
                             required
                             style={{ flex: 1 }}
                         >
@@ -1095,18 +1025,10 @@ const ExamForm = ({
                             type="button"
                             className="auto-assign-btn"
                             onClick={onAutoAssign}
-                            disabled={
-                                loading || autoAssignLoading || !canAutoAssign
-                            }
+                            disabled={!canAutoAssign}
                             style={{ minWidth: "160px" }}
                         >
-                            {autoAssignLoading ? (
-                                <span>Recherche...</span>
-                            ) : (
-                                <>
-                                    <span>⚡</span> Affectation auto
-                                </>
-                            )}
+                            <span>⚡</span> Affectation auto
                         </button>
                     </div>
 
@@ -1180,7 +1102,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, room: e.target.value })
                         }
-                        disabled={loading}
                         required
                     >
                         <option value="">Sélectionner une salle</option>
@@ -1205,7 +1126,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, specialite: e.target.value })
                         }
-                        disabled={loading}
                     >
                         <option value="">Sélectionner une spécialité</option>
                         {specialties.map((s, index) => (
@@ -1226,7 +1146,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, niveau: e.target.value })
                         }
-                        disabled={loading}
                     >
                         <option value="">Sélectionner un niveau</option>
                         {levels.map((l, index) => (
@@ -1249,7 +1168,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, group: e.target.value })
                         }
-                        disabled={loading}
                     >
                         <option value="">Sélectionner un groupe</option>
                         {filteredGroups.map((g, index) => (
@@ -1270,7 +1188,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, semester: e.target.value })
                         }
-                        disabled={loading}
                         required
                     >
                         <option value="">Sélectionner un semestre</option>
@@ -1295,7 +1212,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, date: e.target.value })
                         }
-                        disabled={loading}
                         required
                     />
                 </div>
@@ -1308,7 +1224,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, startTime: e.target.value })
                         }
-                        disabled={loading}
                         required
                     />
                 </div>
@@ -1321,7 +1236,6 @@ const ExamForm = ({
                         onChange={(e) =>
                             setExam({ ...exam, endTime: e.target.value })
                         }
-                        disabled={loading}
                         required
                     />
                 </div>
@@ -1331,7 +1245,6 @@ const ExamForm = ({
                 <button
                     className="btn-secondary"
                     onClick={onCancel}
-                    disabled={loading}
                     type="button"
                 >
                     Annuler
@@ -1339,10 +1252,9 @@ const ExamForm = ({
                 <button
                     className="btn-primary"
                     onClick={onSubmit}
-                    disabled={loading}
                     type="button"
                 >
-                    {loading ? "Traitement..." : submitLabel}
+                    {submitLabel}
                 </button>
             </div>
         </div>
