@@ -15,11 +15,15 @@
 
 /* Background decorative elements */
 .login-page::before {
-    content: '';
+    content: "";
     position: absolute;
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, rgba(37, 99, 235, 0.1), transparent 70%);
+    background: radial-gradient(
+        circle,
+        rgba(37, 99, 235, 0.1),
+        transparent 70%
+    );
     border-radius: 50%;
     top: -150px;
     right: -150px;
@@ -27,11 +31,15 @@
 }
 
 .login-page::after {
-    content: '';
+    content: "";
     position: absolute;
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.08), transparent 70%);
+    background: radial-gradient(
+        circle,
+        rgba(59, 130, 246, 0.08),
+        transparent 70%
+    );
     border-radius: 50%;
     bottom: -100px;
     left: -100px;
@@ -43,7 +51,11 @@
     position: absolute;
     opacity: 0.15;
     z-index: 1;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.1));
+    background: linear-gradient(
+        135deg,
+        rgba(37, 99, 235, 0.2),
+        rgba(59, 130, 246, 0.1)
+    );
     animation: morph 20s ease-in-out infinite;
 }
 
@@ -189,43 +201,55 @@
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes logoEntrance {
-    0% { 
-        opacity: 0; 
+    0% {
+        opacity: 0;
         transform: translateY(-40px) scale(0.8) rotate(-10deg);
     }
-    60% { 
+    60% {
         transform: translateY(10px) scale(1.05) rotate(2deg);
     }
-    80% { 
+    80% {
         transform: translateY(-5px) scale(0.98) rotate(-1deg);
     }
-    100% { 
-        opacity: 1; 
+    100% {
+        opacity: 1;
         transform: translateY(0) scale(1) rotate(0deg);
     }
 }
 
 @keyframes float {
-    0%, 100% { 
+    0%,
+    100% {
         transform: translateY(0px) rotate(0deg);
     }
-    50% { 
+    50% {
         transform: translateY(-10px) rotate(1deg);
     }
 }
 
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
         opacity: 1;
     }
@@ -236,7 +260,8 @@
 }
 
 @keyframes morph {
-    0%, 100% {
+    0%,
+    100% {
         border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
         transform: translateY(0) scale(1);
     }
@@ -255,7 +280,8 @@
 }
 
 @keyframes floatShape {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0px) translateX(0px) rotate(0deg);
     }
     33% {
@@ -267,13 +293,25 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    50% { transform: translateX(6px); }
-    75% { transform: translateX(-6px); }
-    100% { transform: translateX(0); }
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-6px);
+    }
+    50% {
+        transform: translateX(6px);
+    }
+    75% {
+        transform: translateX(-6px);
+    }
+    100% {
+        transform: translateX(0);
+    }
 }

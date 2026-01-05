@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
-import "./RoomManagement.css";
+import "../../styles/RoomManagement.css";
 
 const RoomManagement = () => {
     const [rooms, setRooms] = useState([]);

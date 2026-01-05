@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../UI/Modal";
 import api from "../../api/axios";
-import "./student-management.css";
+import "../../styles/student-management.css";
 
 const StudentManagement = () => {
     const [students, setStudents] = useState([]);
@@ -664,17 +664,20 @@ const StudentManagement = () => {
                                     setNewStudent({
                                         ...newStudent,
                                         niveau: e.target.value,
+                                        groupe: "", // Reset groupe when niveau changes
                                     })
                                 }
                             >
                                 <option value="">Sélectionner</option>
-                                {niveauOptions.map((niveau) => (
-                                    <option key={niveau} value={niveau}>
-                                        {niveau}
+                                {levels.map((l) => (
+                                    <option key={l.id} value={l.name}>
+                                        {l.name}
                                     </option>
                                 ))}
                             </select>
                         </div>
+
+                        {/* Edit Modal - Specialité field */}
                         <div className="form-group">
                             <label>Spécialité *</label>
                             <select
@@ -683,13 +686,14 @@ const StudentManagement = () => {
                                     setNewStudent({
                                         ...newStudent,
                                         specialite: e.target.value,
+                                        groupe: "", // Reset groupe when specialite changes
                                     })
                                 }
                             >
                                 <option value="">Sélectionner</option>
-                                {specialiteOptions.map((spec) => (
-                                    <option key={spec} value={spec}>
-                                        {spec}
+                                {specialties.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
                                     </option>
                                 ))}
                             </select>
@@ -699,8 +703,7 @@ const StudentManagement = () => {
                     <div className="form-row">
                         <div className="form-group">
                             <label>Groupe *</label>
-                            <input
-                                type="text"
+                            <select
                                 value={newStudent.groupe}
                                 onChange={(e) =>
                                     setNewStudent({
@@ -708,8 +711,33 @@ const StudentManagement = () => {
                                         groupe: e.target.value,
                                     })
                                 }
-                                placeholder="G1"
-                            />
+                                disabled={
+                                    !newStudent.specialite || !newStudent.niveau
+                                }
+                            >
+                                <option value="">Sélectionner</option>
+                                {groups
+                                    .filter(
+                                        (g) =>
+                                            g.level.name ===
+                                                newStudent.niveau &&
+                                            g.specialty.name ===
+                                                newStudent.specialite
+                                    )
+                                    .map((g) => (
+                                        <option key={g.id} value={g.name}>
+                                            {g.name}
+                                        </option>
+                                    ))}
+                            </select>
+                            {(!newStudent.specialite || !newStudent.niveau) && (
+                                <small
+                                    style={{ color: "#666", fontSize: "12px" }}
+                                >
+                                    Veuillez d'abord sélectionner une spécialité
+                                    et un niveau
+                                </small>
+                            )}
                         </div>
                         <div className="form-group">
                             <label>Année Scolaire</label>

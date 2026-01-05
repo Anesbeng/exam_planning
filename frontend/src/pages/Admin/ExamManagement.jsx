@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
 import ExamCalendar from "./ExamCalendar";
-import "./exam-Management.css";
+import "../../styles/exam-Management.css";
 import ConvocationModal from "./ConvocationModal";
 import NotifyTeacherModal from "./NotifyTeacherModal";
 
@@ -40,7 +40,7 @@ const ExamManagement = () => {
     const [filterTeacher, setFilterTeacher] = useState("");
     const [filterRoom, setFilterRoom] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const itemsPerPage = 30;
 
     // View toggle state
     const [viewMode, setViewMode] = useState("table");

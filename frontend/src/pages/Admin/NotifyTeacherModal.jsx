@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
-import "./NotifyTeacherModal.css";
+import "../../styles/NotifyTeacherModal.css";
 
 const NotifyTeacherModal = ({ exam, onClose, onSuccess }) => {
     const [sendingNotification, setSendingNotification] = useState(false);

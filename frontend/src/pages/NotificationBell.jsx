@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import TeacherConvocationView from "./TeacherConvocationView";
-import "./NotificationBell.css";
+import "../styles/NotificationBell.css";
 
 const NotificationBell = ({ teacherMatricule, onNotificationSelect }) => {
     const [notifications, setNotifications] = useState([]);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
-import "./academic-management.css";
+import "../../styles/academic-management.css";
 
 const AcademicManagement = () => {
     /* ================= DATA ================= */

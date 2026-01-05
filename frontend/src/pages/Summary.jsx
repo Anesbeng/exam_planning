@@ -1,9 +1,18 @@
 import React from "react";
-import { BookOpen, Users, Shield, LogIn, Phone, Mail, MapPin, ExternalLink } from "lucide-react";
-import uniLogo from "./logouni.png";
-import teacher from "./teacher.jpg";
-import etudiant from "./etudiant.jpg";
-import admin from "./admin.jpg";
+import {
+    BookOpen,
+    Users,
+    Shield,
+    LogIn,
+    Phone,
+    Mail,
+    MapPin,
+    ExternalLink,
+} from "lucide-react";
+import uniLogo from "./images/logouni.png";
+import teacher from "./images/teacher.jpg";
+import etudiant from "./images/etudiant.jpg";
+import admin from "./images/admin.jpg";
 
 import { useNavigate } from "react-router-dom";
 
@@ -215,27 +224,42 @@ export default function Summary() {
                             </h3>
                             <ul className="space-y-2 text-sm">
                                 <li>
-                                    <a href="#" className="hover:text-green-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-green-300 transition"
+                                    >
                                         Département Informatique
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-green-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-green-300 transition"
+                                    >
                                         Faculté des Sciences
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-green-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-green-300 transition"
+                                    >
                                         Scolarité
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-green-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-green-300 transition"
+                                    >
                                         Service des Examens
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-green-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-green-300 transition"
+                                    >
                                         Rectorat
                                     </a>
                                 </li>
@@ -249,27 +273,42 @@ export default function Summary() {
                             </h3>
                             <ul className="space-y-2 text-sm">
                                 <li>
-                                    <a href="#" className="hover:text-purple-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-purple-300 transition"
+                                    >
                                         Calendrier Universitaire
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-purple-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-purple-300 transition"
+                                    >
                                         Programmes de Formation
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-purple-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-purple-300 transition"
+                                    >
                                         Annonces et Actualités
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-purple-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-purple-300 transition"
+                                    >
                                         Offres de Stage
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-purple-300 transition">
+                                    <a
+                                        href="#"
+                                        className="hover:text-purple-300 transition"
+                                    >
                                         Règlement Intérieur
                                     </a>
                                 </li>
@@ -294,13 +333,17 @@ export default function Summary() {
                                     <Mail className="w-4 h-4 mt-1 text-yellow-300 flex-shrink-0" />
                                     <div>
                                         <p className="font-semibold">Email:</p>
-                                        <p className="break-all">info@univ-tlemcen.dz</p>
+                                        <p className="break-all">
+                                            info@univ-tlemcen.dz
+                                        </p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <MapPin className="w-4 h-4 mt-1 text-yellow-300 flex-shrink-0" />
                                     <div>
-                                        <p className="font-semibold">Adresse:</p>
+                                        <p className="font-semibold">
+                                            Adresse:
+                                        </p>
                                         <p>Faculté des Sciences</p>
                                         <p>BP 119, 13000</p>
                                         <p>Tlemcen, Algérie</p>

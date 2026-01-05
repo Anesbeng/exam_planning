@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import logoutIcon from "./logout.png";
-import uniLogo from "./logouni.png";
-import studentIcon from "./student.png";
+import logoutIcon from "./images/logout.png";
+import uniLogo from "./images/logouni.png";
+import studentIcon from "./images/student.png";
 import "../styles/dashboard.css";
 
 export default function EspaceEtudiants() {
@@ -388,27 +388,30 @@ export default function EspaceEtudiants() {
     };
 
     const handleLogout = async () => {
-    try {
-        // Call the logout endpoint to invalidate the token server-side
-        await api.post('/auth/logout'); // Adjust the endpoint as per your backend
-        // If your backend doesn't require a body or specific headers, this is fine
-    } catch (err) {
-        // Even if the logout request fails (e.g., network issue), 
-        // we still want to clear local data for security
-        console.warn("Logout API failed, proceeding with local cleanup:", err);
-    } finally {
-        // Always clear local data regardless of API success/failure
-        localStorage.removeItem("user");
-        
-        // Optional: Clear any auth token if stored separately
-        // localStorage.removeItem("token");
-        // Or if using axios defaults:
-        // delete api.defaults.headers.common['Authorization'];
+        try {
+            // Call the logout endpoint to invalidate the token server-side
+            await api.post("/auth/logout"); // Adjust the endpoint as per your backend
+            // If your backend doesn't require a body or specific headers, this is fine
+        } catch (err) {
+            // Even if the logout request fails (e.g., network issue),
+            // we still want to clear local data for security
+            console.warn(
+                "Logout API failed, proceeding with local cleanup:",
+                err
+            );
+        } finally {
+            // Always clear local data regardless of API success/failure
+            localStorage.removeItem("user");
 
-        // Redirect to login or home
-        navigate("/"); // Better to go directly to Login
-    }
-};
+            // Optional: Clear any auth token if stored separately
+            // localStorage.removeItem("token");
+            // Or if using axios defaults:
+            // delete api.defaults.headers.common['Authorization'];
+
+            // Redirect to login or home
+            navigate("/"); // Better to go directly to Login
+        }
+    };
 
     if (loading) {
         return (

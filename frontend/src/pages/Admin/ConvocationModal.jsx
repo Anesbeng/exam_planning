@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import "./convocation.css";
+import "../../styles/convocation.css";
 
 const ConvocationModal = ({ exam, onClose }) => {
     const [students, setStudents] = useState([]);

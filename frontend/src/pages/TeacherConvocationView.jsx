@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import "./TeacherConvocationView.css";
+import "../styles/TeacherConvocationView.css";
 
 const TeacherConvocationView = ({ notification, onClose }) => {
     const [students, setStudents] = useState([]);

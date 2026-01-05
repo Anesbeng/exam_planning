@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../UI/Modal";
 import api from "../../api/axios";
-import "./user-management.css";
+import "../../styles/user-management.css";
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -616,7 +616,9 @@ const UserManagement = () => {
             >
                 <div className="import-container">
                     <p>
-                        <strong>Format CSV attendu (séparateur: point-virgule):</strong>
+                        <strong>
+                            Format CSV attendu (séparateur: point-virgule):
+                        </strong>
                     </p>
                     <p style={{ fontSize: "0.9em", color: "#666" }}>
                         matricule;nom;email;role;password;specialite;niveau;annee_scolaire;groupe

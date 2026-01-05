@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../UI/Modal";
 import api from "../../api/axios";
-import "./teacher-management.css";
+import "../../styles/teacher-management.css";
 
 const TeacherManagement = () => {
     const [teachers, setTeachers] = useState([]);

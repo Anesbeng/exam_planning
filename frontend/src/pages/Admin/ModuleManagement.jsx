@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import Modal from "../UI/Modal";
-import "./ModuleManagement.css";
+import "../../styles/ModuleManagement.css";
 
 const ModuleManagement = () => {
     const [modules, setModules] = useState([]);

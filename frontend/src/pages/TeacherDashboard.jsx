@@ -4,11 +4,11 @@ import api from "../api/axios";
 import Modal from "./UI/Modal";
 import NotificationBell from "./NotificationBell";
 import TeacherConvocationView from "./TeacherConvocationView";
-import logoutIcon from "./logout.png";
-import uniLogo from "./logouni.png";
+import logoutIcon from "./images/logout.png";
+import uniLogo from "./images/logouni.png";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import teacherIcon from "./teacher.png";
+import teacherIcon from "./images/teacher.png";
 import "../styles/dashboard.css";
 
 export default function EspaceEnseignants() {
