@@ -686,7 +686,7 @@ const StudentManagement = () => {
                                     setNewStudent({
                                         ...newStudent,
                                         specialite: e.target.value,
-                                        groupe: "", // Reset groupe when specialite changes
+                                        groupe: "",
                                     })
                                 }
                             >

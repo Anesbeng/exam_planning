@@ -31,9 +31,13 @@ export default function Summary() {
                             className="w-12 h-12 object-contain"
                         />
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-800">
+                            <h1
+                                className="text-2xl font-bold text-slate-800"
+                                style={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
                                 UABT
                             </h1>
+
                             <p className="text-sm text-slate-700">
                                 Département Informatique
                             </p>
@@ -42,9 +46,10 @@ export default function Summary() {
 
                     <button
                         onClick={() => navigate("/login")}
+                        style={{ fontFamily: "Montserrat, sans-serif" }}
                         className="hidden sm:flex items-center gap-2 px-6 py-2 rounded-xl 
-                       bg-white/30 backdrop-blur-md border border-white/40
-                       text-slate-800 font-semibold shadow hover:bg-white/50 transition"
+             bg-white/30 backdrop-blur-md border border-white/40
+             text-slate-800 font-semibold shadow hover:bg-white/50 transition"
                     >
                         <LogIn className="w-4 h-4" />
                         Log In
@@ -55,9 +60,13 @@ export default function Summary() {
             {/* HERO */}
             <section className="py-20 text-center">
                 <div className="max-w-4xl mx-auto px-6">
-                    <h2 className="text-4xl font-bold text-slate-800 mb-6">
+                    <h2
+                        className="text-4xl font-bold text-slate-800 mb-6"
+                        style={{ fontFamily: "Montserrat, sans-serif" }}
+                    >
                         Bienvenue au Département Informatique
                     </h2>
+
                     <p className="text-lg text-slate-700">
                         La plateforme UABT vous permet de gérer efficacement vos
                         activités académiques : suivi des notes, planning des
@@ -83,15 +92,19 @@ export default function Summary() {
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <Users className="w-8 h-8 text-blue-600" />
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3
+                                    className="text-2xl font-bold text-slate-800"
+                                    style={{
+                                        fontFamily: "Montserrat, sans-serif",
+                                    }}
+                                >
                                     Espace Étudiants
                                 </h3>
                             </div>
                             <ul className="space-y-3 text-slate-700">
-                                <li>• Planning des cours (CC, EXAM, RATT)</li>
-                                <li>• Informations et réclamations</li>
+                                <li>• Planning des Examens (CC, EXAM, RATT)</li>
+                                <li>• Informations</li>
                                 <li>• Groupe de chaque étudiant</li>
-                                <li>• Accès aux annonces pédagogiques</li>
                             </ul>
                         </div>
                     </div>
@@ -110,7 +123,12 @@ export default function Summary() {
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <BookOpen className="w-8 h-8 text-green-600" />
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3
+                                    className="text-2xl font-bold text-slate-800"
+                                    style={{
+                                        fontFamily: "Montserrat, sans-serif",
+                                    }}
+                                >
                                     Espace Enseignants
                                 </h3>
                             </div>
@@ -136,7 +154,12 @@ export default function Summary() {
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <Shield className="w-8 h-8 text-purple-600" />
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3
+                                    className="text-2xl font-bold text-slate-800"
+                                    style={{
+                                        fontFamily: "Montserrat, sans-serif",
+                                    }}
+                                >
                                     Espace Admin
                                 </h3>
                             </div>
@@ -218,10 +241,11 @@ export default function Summary() {
                         </div>
 
                         {/* ADMINISTRATION */}
-                        <div>
+                        <div style={{ fontFamily: "Montserrat, sans-serif" }}>
                             <h3 className="text-lg font-bold mb-4 text-green-300">
                                 ADMINISTRATION
                             </h3>
+
                             <ul className="space-y-2 text-sm">
                                 <li>
                                     <a
@@ -271,7 +295,10 @@ export default function Summary() {
                             <h3 className="text-lg font-bold mb-4 text-purple-300">
                                 PAGES POPULAIRES
                             </h3>
-                            <ul className="space-y-2 text-sm">
+                            <ul
+                                className="space-y-2 text-sm"
+                                style={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
                                 <li>
                                     <a
                                         href="#"
@@ -321,14 +348,20 @@ export default function Summary() {
                                 CONTACT
                             </h3>
                             <ul className="space-y-3 text-sm">
-                                <li className="flex items-start gap-2">
+                                <li
+                                    className="flex items-start gap-2"
+                                    style={{
+                                        fontFamily: "Montserrat, sans-serif",
+                                    }}
+                                >
                                     <Phone className="w-4 h-4 mt-1 text-yellow-300 flex-shrink-0" />
                                     <div>
-                                        <p className="font-semibold">Tél:</p>
+                                        <p className="font-semibold">Tél :</p>
                                         <p>043 21 63 70</p>
                                         <p>043 21 78 77</p>
                                     </div>
                                 </li>
+
                                 <li className="flex items-start gap-2">
                                     <Mail className="w-4 h-4 mt-1 text-yellow-300 flex-shrink-0" />
                                     <div>
@@ -338,11 +371,16 @@ export default function Summary() {
                                         </p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-2">
+                                <li
+                                    className="flex items-start gap-2"
+                                    style={{
+                                        fontFamily: "Montserrat, sans-serif",
+                                    }}
+                                >
                                     <MapPin className="w-4 h-4 mt-1 text-yellow-300 flex-shrink-0" />
                                     <div>
                                         <p className="font-semibold">
-                                            Adresse:
+                                            Adresse :
                                         </p>
                                         <p>Faculté des Sciences</p>
                                         <p>BP 119, 13000</p>
@@ -357,7 +395,10 @@ export default function Summary() {
                     <div className="border-t border-white/20 my-8"></div>
 
                     {/* COPYRIGHT */}
-                    <div className="text-center text-sm">
+                    <div
+                        className="text-center text-sm"
+                        style={{ fontFamily: "Montserrat, sans-serif" }}
+                    >
                         <p className="font-semibold mb-2">
                             © 2025 Université Aboubekr Belkaid - Tlemcen
                         </p>
